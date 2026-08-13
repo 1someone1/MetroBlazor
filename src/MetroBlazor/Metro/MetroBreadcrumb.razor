@@ -1,0 +1,22 @@
+@namespace MetroBlazor
+
+<nav class="metro-breadcrumb @Class" aria-label="Breadcrumb" @attributes="AdditionalAttributes">
+    @foreach (var item in Items)
+    {
+        <button type="button" class="metro-breadcrumb-item @(item.Key == CurrentKey ? "current" : null)" aria-current="@(item.Key == CurrentKey ? "page" : null)" @onclick="@(() => Select(item))">@item.Label</button>
+        @if (item != Items.Last())
+        {
+            <span class="metro-breadcrumb-separator" aria-hidden="true">/</span>
+        }
+    }
+</nav>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<MetroBreadcrumbItem> Items { get; set; } = Array.Empty<MetroBreadcrumbItem>();
+    [Parameter] public string? CurrentKey { get; set; }
+    [Parameter] public EventCallback<MetroBreadcrumbItem> ItemClick { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task Select(MetroBreadcrumbItem item) => ItemClick.InvokeAsync(item);
+}

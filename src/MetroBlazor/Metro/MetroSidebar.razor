@@ -1,0 +1,27 @@
+@namespace MetroBlazor
+
+<aside class="metro-sidebar @(Collapsed ? "collapsed" : null) @Class" @attributes="AdditionalAttributes">
+    <div class="metro-sidebar-brand">
+        <button type="button" class="metro-sidebar-toggle" aria-label="@(Collapsed ? "Expand navigation" : "Collapse navigation")" aria-expanded="@(!Collapsed)" @onclick="ToggleCollapsed">
+            <MetroIcon Name="menu" Size="MetroIconSize.Medium" />
+        </button>
+        @if (!Collapsed)
+        {
+            <span class="metro-sidebar-heading">@Brand</span>
+        }
+    </div>
+    <div class="metro-sidebar-content">
+        @ChildContent
+    </div>
+</aside>
+
+@code {
+    [Parameter] public bool Collapsed { get; set; }
+    [Parameter] public EventCallback<bool> CollapsedChanged { get; set; }
+    [Parameter] public string Brand { get; set; } = "METROBLAZOR";
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task ToggleCollapsed() => CollapsedChanged.InvokeAsync(!Collapsed);
+}

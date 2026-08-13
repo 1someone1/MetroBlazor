@@ -1,0 +1,80 @@
+.metro-tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    box-sizing: border-box;
+    min-width: 120px;
+    min-height: 120px;
+    padding: 12px;
+    border: 0;
+    border-left: 4px solid transparent;
+    border-radius: 0;
+    color: #fff;
+    background: var(--metro-tile-accent, var(--metro-accent));
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    transition: filter var(--metro-duration-fast) var(--metro-ease-standard),
+                transform var(--metro-duration-fast) var(--metro-ease-standard);
+}
+
+.metro-tile:hover {
+    filter: brightness(1.1);
+}
+
+.metro-tile:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.metro-tile:active {
+    transform: scale(0.96);
+}
+
+.metro-tile.selected {
+    border-left-color: #fff;
+}
+
+.metro-tile:disabled,
+.metro-tile.disabled {
+    cursor: default;
+    filter: grayscale(1);
+    opacity: 0.45;
+}
+
+.metro-tile-small { min-width: 60px; min-height: 60px; }
+.metro-tile-medium { min-width: 120px; min-height: 120px; }
+.metro-tile-wide { min-width: 248px; min-height: 120px; }
+.metro-tile-large { min-width: 248px; min-height: 248px; }
+
+.metro-tile-icon {
+    margin-bottom: 8px;
+    font-size: 28px;
+    line-height: 1;
+}
+
+.metro-tile-label {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.metro-tile-sublabel {
+    margin-top: 2px;
+    color: inherit;
+    font-size: 12px;
+    line-height: 1.2;
+    opacity: 0.85;
+}
+
+.metro-tile-live-content {
+    display: block;
+    animation: metro-tile-live-in var(--metro-duration-standard) var(--metro-ease-decelerate);
+}
+
+@keyframes metro-tile-live-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}

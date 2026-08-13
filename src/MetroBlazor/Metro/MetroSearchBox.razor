@@ -1,0 +1,27 @@
+@namespace MetroBlazor
+
+<div class="metro-search-box @Class">
+    <input type="search" value="@Value" placeholder="@Placeholder" aria-label="@AriaLabel" @oninput="OnInput" @attributes="AdditionalAttributes" />
+    @if (!string.IsNullOrWhiteSpace(Value))
+    {
+        <button type="button" class="metro-search-clear" aria-label="Clear search" @onclick="Clear">
+            <MetroIcon Name="close" Size="MetroIconSize.Small" />
+        </button>
+    }
+    else
+    {
+        <MetroIcon Name="search" Size="MetroIconSize.Small" />
+    }
+</div>
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Search";
+    [Parameter] public string AriaLabel { get; set; } = "Search";
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task OnInput(ChangeEventArgs args) => ValueChanged.InvokeAsync(args.Value?.ToString());
+    private Task Clear() => ValueChanged.InvokeAsync(string.Empty);
+}

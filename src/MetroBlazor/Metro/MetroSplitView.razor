@@ -1,0 +1,15 @@
+@namespace MetroBlazor
+
+<div class="metro-split-view @(Open ? "open" : "closed") @Class" @attributes="AdditionalAttributes">
+    <aside class="metro-split-pane">@PaneContent</aside>
+    <main class="metro-split-content">@ChildContent</main>
+</div>
+
+@code {
+    [Parameter] public bool Open { get; set; } = true;
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? PaneContent { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}

@@ -1,0 +1,629 @@
+@page "/"
+@rendermode InteractiveServer
+@using MetroBlazor
+
+<PageTitle>MetroBlazor Showcase</PageTitle>
+
+<div class="showcase-theme-surface" data-theme="@CurrentThemeVariant.ToString().ToLowerInvariant()">
+<div class="showcase-docs-shell">
+    <MetroSidebar Collapsed="@sidebarCollapsed" CollapsedChanged="@(value => sidebarCollapsed = value)">
+        <MetroNavigation Items="navigationItems"
+                         SelectedKey="@selectedControl"
+                         SelectedKeyChanged="SelectControl" />
+    </MetroSidebar>
+
+    <main class="showcase-docs-main">
+        <header class="showcase-header">
+            <div>
+                <p class="showcase-eyebrow">METROBLAZOR / COMPONENT GALLERY</p>
+                <MetroText TextStyle="MetroTextStyle.Display">@CurrentTitle</MetroText>
+                <MetroText TextStyle="MetroTextStyle.Body" Class="showcase-lede">Windows 8.1 Metro controls for modern browsers, built touch-first and kept deliberately flat.</MetroText>
+            </div>
+            <div class="showcase-header-actions">
+                <MetroBadge>TOUCH FIRST</MetroBadge>
+                <MetroBadge>@(syncEnabled ? "SYNC ON" : "SYNC OFF")</MetroBadge>
+                <div class="showcase-theme-switcher" aria-label="Theme variants">
+                    <MetroButton Quiet="@(CurrentThemeVariant != MetroThemeVariant.Dark)" OnClick="SetDarkTheme">Dark</MetroButton>
+                    <MetroButton Quiet="@(CurrentThemeVariant != MetroThemeVariant.Light)" OnClick="SetLightTheme">Light</MetroButton>
+                    <MetroButton Quiet="@(CurrentThemeVariant != MetroThemeVariant.Blue)" OnClick="SetBlueTheme">Blue</MetroButton>
+                    <MetroButton Quiet="@(CurrentThemeVariant != MetroThemeVariant.Purple)" OnClick="SetPurpleTheme">Purple</MetroButton>
+                </div>
+            </div>
+        </header>
+
+        @if (selectedControl == "overview")
+        {
+            <section class="showcase-section showcase-overview" aria-labelledby="overview-heading">
+                <p class="showcase-kicker">START HERE</p>
+                <MetroText TextStyle="MetroTextStyle.Header" id="overview-heading">A living control reference</MetroText>
+                <MetroText TextStyle="MetroTextStyle.Body">Use the left navigation to inspect every implemented MetroBlazor element. Blades are reserved for explicit notification and toggle actions.</MetroText>
+                <div class="showcase-overview-grid">
+                    @foreach (var item in navigationItems.Where(item => item.Key != "overview"))
+                    {
+                        <button type="button" class="showcase-overview-item" @onclick="@(() => SelectControl(item.Key))">
+                            <span class="showcase-overview-icon"><MetroIcon Name="@item.Icon" Size="MetroIconSize.Medium" /></span>
+                            <span><strong>@item.Label</strong><small>@item.Group</small></span>
+                            <span class="showcase-overview-arrow">→</span>
+                        </button>
+                    }
+                </div>
+            </section>
+        }
+        else if (selectedControl == "tile")
+        {
+            <section class="showcase-section" aria-labelledby="tile-heading">
+                <div class="showcase-section-heading">
+                    <p class="showcase-kicker">SURFACE / METROTILE</p>
+                    <MetroText TextStyle="MetroTextStyle.Header" id="tile-heading">Tiles</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Body">Four canonical sizes with a shared touch, mouse, and keyboard interaction model.</MetroText>
+                </div>
+                <div class="showcase-tile-row">
+                    <MetroTile Label="Photos" SubLabel="12 new items" Icon="✦" AccentColor="#0078D7" Size="@MetroTileSize.Small" OnClick="TileClicked" />
+                    <MetroTile Label="Videos" SubLabel="Recently added" Icon="▶" AccentColor="#008272" Size="@MetroTileSize.Medium" OnClick="TileClicked" />
+                    <MetroTile Label="Files" SubLabel="Browse storage" Icon="□" AccentColor="#CA5010" Size="@MetroTileSize.Wide" Selected="true" OnClick="TileClicked" />
+                    <MetroTile Label="Music" SubLabel="Playing now" Icon="♫" AccentColor="#C239B3" Size="@MetroTileSize.Large" OnClick="TileClicked" />
+                </div>
+                <p class="showcase-status" aria-live="polite">@tileStatus</p>
+            </section>
+        }
+        else if (selectedControl == "input")
+        {
+            <DemoSection Kicker="FORM / METROINPUT" Title="Text input" Description="The classic Metro underline field with a clear focus transition.">
+                <div class="showcase-control-card showcase-single-demo">
+                    <MetroInput Id="display-name" Label="Display name" Placeholder="Type a name" Value="@displayName" ValueChanged="OnNameChanged" />
+                    <p class="showcase-value">Value: @displayName</p>
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "transition")
+        {
+            <DemoSection Kicker="MOTION / METROPAGETRANSITION" Title="Page transition" Description="A reusable content transition for app navigation. Application routing remains outside the component library.">
+                <MetroPageTransition TransitionKey="@transitionKey"><MetroSurface><MetroText TextStyle="MetroTextStyle.Subheader">Transitioning surface</MetroText></MetroSurface></MetroPageTransition>
+                <MetroButton OnClick="ChangeTransition">Change content</MetroButton>
+            </DemoSection>
+        }
+        else if (selectedControl == "frame")
+        {
+            <DemoSection Kicker="LAYOUT / METROAPPFRAME" Title="App frame" Description="A non-modal application frame with reusable header and content regions.">
+                <MetroAppFrame>
+                    <Header><MetroText TextStyle="MetroTextStyle.Subheader">Files</MetroText></Header>
+                    <ChildContent><MetroSurface><MetroText TextStyle="MetroTextStyle.Body">Application content surface</MetroText></MetroSurface></ChildContent>
+                </MetroAppFrame>
+            </DemoSection>
+        }
+        else if (selectedControl == "tile-group")
+        {
+            <DemoSection Kicker="SURFACE / METROTILEGROUP" Title="Tile group" Description="A named group for organizing tiles on a Start surface.">
+                <MetroTileGroup Title="Pinned" Items="groupApps" ItemMoved="GroupItemMoved" ItemSizeChanged="GroupItemSizeChanged" />
+                <p class="showcase-status">Drag tiles to reorder them. Hover a tile and use ↗ to cycle Small, Medium, Wide, and Large. @groupStatus</p>
+            </DemoSection>
+        }
+        else if (selectedControl == "semantic-zoom")
+        {
+            <DemoSection Kicker="SURFACE / METROSEMANTICZOOM" Title="Semantic zoom" Description="The Windows 8 grouped overview and detailed tile surface represent the same content at different zoom levels.">
+                <MetroSemanticZoom @bind-ZoomedOut="zoomedOut">
+                    <ZoomedInContent><MetroAppGrid Items="apps" Columns="3" /></ZoomedInContent>
+                    <ZoomedOutContent>
+                        <div class="showcase-semantic-groups">
+                            <MetroTileGroup Title="Pinned apps">
+                                <ChildContent><MetroTileGroup Items="pinnedApps" /></ChildContent>
+                            </MetroTileGroup>
+                            <MetroTileGroup Title="System">
+                                <ChildContent><MetroTileGroup Items="systemApps" /></ChildContent>
+                            </MetroTileGroup>
+                        </div>
+                    </ZoomedOutContent>
+                </MetroSemanticZoom>
+            </DemoSection>
+        }
+        else if (selectedControl == "breadcrumb")
+        {
+            <DemoSection Kicker="NAVIGATION / METROBREADCRUMB" Title="Breadcrumb" Description="Flat path navigation for file and settings surfaces.">
+                <MetroBreadcrumb Items="breadcrumbs" CurrentKey="currentBreadcrumb" ItemClick="BreadcrumbClicked" />
+            </DemoSection>
+        }
+        else if (selectedControl == "tree")
+        {
+            <DemoSection Kicker="COLLECTION / METROTREEVIEW" Title="Tree view" Description="Expandable hierarchical navigation for folders and settings categories.">
+                <MetroTreeView Nodes="treeNodes" SelectedKey="selectedTreeNode" NodeClick="TreeNodeClicked" />
+                <p class="showcase-status">@treeStatus</p>
+            </DemoSection>
+        }
+        else if (selectedControl == "split")
+        {
+            <DemoSection Kicker="LAYOUT / METROSPLITVIEW" Title="Split view" Description="A reusable pane and content layout for file and settings applications.">
+                <MetroSplitView>
+                    <PaneContent><MetroNavigation Items="navigationItems" SelectedKey="@selectedControl" /></PaneContent>
+                    <ChildContent><MetroText TextStyle="MetroTextStyle.Body">Main content pane</MetroText></ChildContent>
+                </MetroSplitView>
+            </DemoSection>
+        }
+        else if (selectedControl == "button")
+        {
+            <DemoSection Kicker="ACTION / METROBUTTON" Title="Buttons" Description="Solid and quiet actions with square geometry and pressed feedback.">
+                <div class="showcase-control-card showcase-single-demo">
+                    <div class="showcase-inline-controls">
+                        <MetroButton OnClick="Save">Save changes</MetroButton>
+                        <MetroButton Quiet Disabled="@saving">@(saving ? "Saving..." : "Cancel")</MetroButton>
+                        <span class="showcase-icon-button-example">
+                            <MetroButton Icon="arrow-left" IconOnly Bordered AriaLabel="Back" />
+                            <small>Bordered / back</small>
+                        </span>
+                        <span class="showcase-icon-button-example">
+                            <MetroButton Icon="search" IconOnly AriaLabel="Search" />
+                            <small>Non-bordered</small>
+                        </span>
+                    </div>
+                    <p class="showcase-value">Icon buttons: bordered circular and non-bordered.</p>
+                    <p class="showcase-value" aria-live="polite">@saveStatus</p>
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "typography")
+        {
+            <DemoSection Kicker="FOUNDATION / METROTEXT" Title="Typography" Description="Windows 8.1 uses a clear Segoe UI hierarchy: light display titles, compact headers, readable body copy, and restrained captions.">
+                <div class="showcase-typography-sample">
+                    <MetroText TextStyle="MetroTextStyle.Display">Display title</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Header">Section header</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Subheader">Subheader for a grouped surface</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Body">Body copy is open, left aligned, and easy to scan on a touch-first surface.</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Label">Control label</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Caption">Caption and secondary metadata</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Link" Href="#typography">Accent link</MetroText>
+                    <strong class="showcase-type-number">1,284</strong>
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "toggle")
+        {
+            <DemoSection Kicker="FORM / METROTOGGLE" Title="Toggle" Description="A squared switch that exposes its state through the switch role and aria-checked.">
+                <div class="showcase-control-card showcase-single-demo">
+                    <MetroToggle Label="Enable sync" @bind-Checked="syncEnabled" />
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "checkbox")
+        {
+            <DemoSection Kicker="FORM / METROCHECKBOX" Title="Checkbox" Description="A touch-sized checkbox with a visible Metro check state.">
+                <div class="showcase-control-card showcase-single-demo">
+                    <MetroCheckbox Label="Use cellular data" @bind-Checked="cellularEnabled" />
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "progress")
+        {
+            <DemoSection Kicker="FEEDBACK / METROPROGRESS" Title="Progress" Description="Segmented determinate progress and staggered square-block indeterminate motion.">
+                <div class="showcase-feedback-grid">
+                    <div class="showcase-control-card">
+                        <div class="showcase-card-title"><MetroText TextStyle="MetroTextStyle.Subheader">Upload progress</MetroText><strong>@progressValue%</strong></div>
+                        <MetroProgress Value="@progressValue" AriaLabel="Upload progress" />
+                        <div class="showcase-inline-controls">
+                            <MetroButton Quiet OnClick="DecreaseProgress">- 10</MetroButton>
+                            <MetroButton Quiet OnClick="IncreaseProgress">+ 10</MetroButton>
+                        </div>
+                    </div>
+                    <div class="showcase-control-card">
+                        <div class="showcase-card-title"><MetroText TextStyle="MetroTextStyle.Subheader">Indeterminate</MetroText><MetroBadge>Working</MetroBadge></div>
+                        <MetroProgress IsIndeterminate="true" AriaLabel="Loading" />
+                    </div>
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "badge")
+        {
+            <DemoSection Kicker="FEEDBACK / METROBADGE" Title="Badge" Description="Compact uppercase status and count labels for tiles and commands.">
+                <div class="showcase-control-card showcase-single-demo">
+                    <div class="showcase-inline-controls"><MetroBadge>New</MetroBadge><MetroBadge>12</MetroBadge><MetroBadge>Syncing</MetroBadge></div>
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "app-grid")
+        {
+            <DemoSection Kicker="LAUNCHER / METROAPPGRID" Title="App grid" Description="A responsive launcher that keeps the same Metro tile language at every viewport.">
+                <MetroAppGrid Items="apps" Columns="4" ItemClick="AppClicked" />
+                <p class="showcase-status" aria-live="polite">@appStatus</p>
+            </DemoSection>
+        }
+        else if (selectedControl == "sidebar")
+        {
+            <DemoSection Kicker="NAVIGATION / METROSIDEBAR" Title="Sidebar" Description="A left-side component index with a selected rail, inspired by Fluent documentation and Windows 8 navigation.">
+                <div class="showcase-control-card showcase-sidebar-preview">
+                    <MetroSidebar>
+                        <MetroNavigation Items="navigationItems" SelectedKey="@selectedControl" />
+                    </MetroSidebar>
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "blade")
+        {
+            <DemoSection Kicker="NAVIGATION / METROBLADE" Title="Blade" Description="The Windows 8 right-side detail surface, with a scrim and fade-in slide motion.">
+                <div class="showcase-control-card showcase-single-demo"><MetroButton OnClick="OpenBlade">Open detail blade</MetroButton></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "icon")
+        {
+            <DemoSection Kicker="FOUNDATION / METROICON" Title="Icons" Description="The MetroIcon API exposes the Fluent UI System Icons catalog through stable searchable names and currentColor rendering.">
+                <MetroInput Label="Search icons" Placeholder="Try home, arrow, folder..." Value="@iconQuery" ValueChanged="OnIconQueryChanged" />
+                <MetroDataGrid TItem="IconRow" Items="@IconRows">
+                    <HeaderTemplate><th>Icon catalog</th></HeaderTemplate>
+                    <RowTemplate Context="row">
+                        <td>
+                            <div class="showcase-icon-row">
+                                @foreach (var icon in row.Names)
+                                {
+                                    <div class="showcase-icon-item"><MetroIcon Name="@icon" Size="MetroIconSize.Large" /><span>@icon</span></div>
+                                }
+                            </div>
+                        </td>
+                    </RowTemplate>
+                </MetroDataGrid>
+            </DemoSection>
+        }
+        else if (selectedControl == "select")
+        {
+            <DemoSection Kicker="FORM / METROSELECT" Title="Select" Description="A native select with Metro underline treatment and accessible label association.">
+                <div class="showcase-control-card showcase-single-demo"><MetroSelect Label="Storage location" Options="selectOptions" @bind-Value="selectedOption" /></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "radio")
+        {
+            <DemoSection Kicker="FORM / METRORADIO" Title="Radio" Description="Squared radio controls with a visible selection indicator.">
+                <div class="showcase-control-card showcase-single-demo showcase-stack-demo">
+                    <MetroRadio Label="Automatic" GroupName="mode" Value="automatic" Checked="@(radioValue == "automatic")" ValueChanged="SetRadio" />
+                    <MetroRadio Label="Manual" GroupName="mode" Value="manual" Checked="@(radioValue == "manual")" ValueChanged="SetRadio" />
+                </div>
+            </DemoSection>
+        }
+        else if (selectedControl == "slider")
+        {
+            <DemoSection Kicker="FORM / METROSLIDER" Title="Slider" Description="A touch-sized range control with explicit value feedback.">
+                <div class="showcase-control-card showcase-single-demo"><MetroSlider Label="Brightness" @bind-Value="sliderValue" /></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "search")
+        {
+            <DemoSection Kicker="FORM / METROSEARCHBOX" Title="Search box" Description="Search input with icon affordance and clear action.">
+                <div class="showcase-control-card showcase-single-demo"><MetroSearchBox Placeholder="Search files" @bind-Value="searchValue" /><p class="showcase-value">Query: @searchValue</p></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "list")
+        {
+            <DemoSection Kicker="COLLECTION / METROLISTVIEW" Title="List view" Description="A flat, touch-friendly list with full-row activation.">
+                <MetroListView TItem="string" Items="listItems" ItemClick="ListClicked">
+                    <ItemTemplate Context="item">
+                        <div class="showcase-list-item-content">
+                            <span class="showcase-list-image" aria-hidden="true"><MetroIcon Name="folder" Size="MetroIconSize.Medium" /></span>
+                            <span>@item</span>
+                        </div>
+                    </ItemTemplate>
+                </MetroListView>
+                <p class="showcase-status">@listStatus</p>
+            </DemoSection>
+        }
+        else if (selectedControl == "pivot")
+        {
+            <DemoSection Kicker="NAVIGATION / METROPIVOT" Title="Pivot" Description="Horizontal section navigation with an active underline and overflow scrolling.">
+                <MetroPivot Items="pivotItems" @bind-SelectedKey="pivotValue"><p>Current pivot: @pivotValue</p></MetroPivot>
+            </DemoSection>
+        }
+        else if (selectedControl == "hub")
+        {
+            <DemoSection Kicker="LAYOUT / METROHUB" Title="Hub" Description="A spacious content surface for grouped Metro sections.">
+                <MetroHub Eyebrow="HOME" Title="Your files"><MetroAppGrid Items="apps" Columns="3" /></MetroHub>
+            </DemoSection>
+        }
+        else if (selectedControl == "navigation")
+        {
+            <DemoSection Kicker="NAVIGATION / METRONAVIGATION" Title="Navigation" Description="A compact left navigation rail for application surfaces.">
+                <div class="showcase-control-card showcase-single-demo"><MetroNavigation Items="navigationItems" SelectedKey="@selectedControl" /></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "command-bar")
+        {
+            <DemoSection Kicker="COMMANDS / METROCOMMANDBAR" Title="Command bar" Description="Flat command actions with optional icons and disabled states.">
+                <MetroCommandBar Items="commands" CommandClick="CommandClicked" /><p class="showcase-status">@commandStatus</p>
+            </DemoSection>
+        }
+        else if (selectedControl == "app-bar")
+        {
+            <DemoSection Kicker="COMMANDS / METROAPPBAR" Title="App bar" Description="A bottom command surface that reveals and hides from the lower edge.">
+                <div class="showcase-control-card showcase-single-demo"><MetroButton OnClick="ToggleAppBar">@(appBarOpen ? "Close app bar" : "Open app bar")</MetroButton></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "flyout")
+        {
+            <DemoSection Kicker="SURFACE / METROFLYOUT" Title="Flyout" Description="A contextual surface with a scrim and entrance motion.">
+                <div class="showcase-control-card showcase-single-demo"><MetroButton OnClick="OpenFlyout">Open flyout</MetroButton></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "dialog")
+        {
+            <DemoSection Kicker="SURFACE / METROCONTENTDIALOG" Title="Content dialog" Description="A centered modal surface with explicit primary and secondary actions.">
+                <div class="showcase-control-card showcase-single-demo"><MetroButton OnClick="OpenDialog">Open content dialog</MetroButton></div>
+            </DemoSection>
+        }
+        else if (selectedControl == "data-grid")
+        {
+            <DemoSection Kicker="COLLECTION / METRODATAGRID" Title="Data grid" Description="A responsive semantic table with row activation and horizontal overflow on narrow screens.">
+                <MetroDataGrid TItem="DemoRow" Items="rows" RowClick="RowClicked">
+                    <HeaderTemplate><th>Name</th><th>Status</th><th>Size</th></HeaderTemplate>
+                    <RowTemplate Context="row"><td>@row.Name</td><td>@row.Status</td><td>@row.Size</td></RowTemplate>
+                </MetroDataGrid>
+                <p class="showcase-status">@rowStatus</p>
+            </DemoSection>
+        }
+</main>
+</div>
+</div>
+
+<MetroBlade Open="bladeOpen" Title="@CurrentTitle" OnClose="CloseBlade">
+    <p class="showcase-kicker">WINDOWS 8 DETAIL SURFACE</p>
+    <MetroText TextStyle="MetroTextStyle.Subheader">@CurrentTitle</MetroText>
+    <MetroText TextStyle="MetroTextStyle.Body">@CurrentDescription</MetroText>
+    <p>This blade is reserved for a small notification or a simple toggle, not for routine component navigation.</p>
+    <MetroToggle Label="Enable notification" @bind-Checked="syncEnabled" />
+</MetroBlade>
+
+<MetroAppBar Open="@appBarOpen" OpenChanged="SetAppBar">
+    <MetroButton Quiet OnClick="CloseAppBar">Close</MetroButton>
+    <MetroButton Quiet OnClick="OpenDialog">More</MetroButton>
+</MetroAppBar>
+
+<MetroFlyout Open="@flyoutOpen" Title="Quick actions" OnClose="CloseFlyout">
+    <p>Flyouts keep contextual actions close to the current surface.</p>
+    <MetroButton OnClick="CloseFlyout">Done</MetroButton>
+</MetroFlyout>
+
+<MetroContentDialog Open="@dialogOpen" Title="Confirm action" OnConfirm="CloseDialog" OnCancel="CloseDialog">
+    <p>This is a Metro content dialog with explicit actions and a centered surface.</p>
+</MetroContentDialog>
+
+@code {
+    [CascadingParameter] private MetroThemeState? ThemeState { get; set; }
+    private MetroThemeVariant showcaseTheme = MetroThemeVariant.Dark;
+    private MetroThemeVariant CurrentThemeVariant => showcaseTheme;
+
+    private string selectedControl = "overview";
+    private bool bladeOpen;
+    private bool syncEnabled = true;
+    private bool cellularEnabled;
+    private bool saving;
+    private int progressValue = 60;
+    private string displayName = "Alex";
+    private string tileStatus = "Select a tile to test its action state.";
+    private string saveStatus = "No changes saved yet.";
+    private string appStatus = "Select an app tile.";
+    private string selectedOption = "local";
+    private string radioValue = "automatic";
+    private double sliderValue = 72;
+    private string? searchValue;
+    private string iconQuery = string.Empty;
+    private string pivotValue = "all";
+    private string listStatus = "Select a list item.";
+    private string commandStatus = "Select a command.";
+    private string rowStatus = "Select a row.";
+    private bool appBarOpen;
+    private bool flyoutOpen;
+    private bool dialogOpen;
+    private bool sidebarCollapsed;
+    private bool zoomedOut;
+    private int transitionKey;
+    private string currentBreadcrumb = "home";
+    private string? selectedTreeNode;
+    private string treeStatus = "Select a node.";
+    private string groupStatus = string.Empty;
+
+    private readonly IReadOnlyList<MetroNavigationItem> navigationItems =
+    [
+        new() { Key = "overview", Label = "Overview", Icon = "home", Group = "Getting started" },
+        new() { Key = "tile", Label = "Tile", Icon = "tile", Group = "Surface" },
+        new() { Key = "tile-group", Label = "Tile group", Icon = "group", Group = "Surface" },
+        new() { Key = "semantic-zoom", Label = "Semantic zoom", Icon = "zoom", Group = "Surface" },
+        new() { Key = "app-grid", Label = "App grid", Icon = "grid", Group = "Surface" },
+        new() { Key = "button", Label = "Button", Icon = "add", Group = "Actions" },
+        new() { Key = "typography", Label = "Typography", Icon = "type", Group = "Foundation" },
+        new() { Key = "input", Label = "Input", Icon = "input", Group = "Forms" },
+        new() { Key = "toggle", Label = "Toggle", Icon = "toggle", Group = "Forms" },
+        new() { Key = "checkbox", Label = "Checkbox", Icon = "check", Group = "Forms" },
+        new() { Key = "progress", Label = "Progress", Icon = "progress", Group = "Feedback" },
+        new() { Key = "badge", Label = "Badge", Icon = "badge", Group = "Feedback" },
+        new() { Key = "sidebar", Label = "Sidebar", Icon = "sidebar", Group = "Navigation" },
+        new() { Key = "blade", Label = "Blade", Icon = "blade", Group = "Navigation" },
+        new() { Key = "icon", Label = "Icon", Icon = "icon", Group = "Foundation" },
+        new() { Key = "transition", Label = "Page transition", Icon = "transition", Group = "Foundation" },
+        new() { Key = "frame", Label = "App frame", Icon = "frame", Group = "Layout" },
+        new() { Key = "select", Label = "Select", Icon = "select", Group = "Forms" },
+        new() { Key = "radio", Label = "Radio", Icon = "radio", Group = "Forms" },
+        new() { Key = "slider", Label = "Slider", Icon = "slider", Group = "Forms" },
+        new() { Key = "search", Label = "Search box", Icon = "search", Group = "Forms" },
+        new() { Key = "list", Label = "List view", Icon = "list", Group = "Collections" },
+        new() { Key = "data-grid", Label = "Data grid", Icon = "table", Group = "Collections" },
+        new() { Key = "pivot", Label = "Pivot", Icon = "pivot", Group = "Navigation" },
+        new() { Key = "hub", Label = "Hub", Icon = "hub", Group = "Layout" },
+        new() { Key = "navigation", Label = "Navigation", Icon = "navigation", Group = "Navigation" },
+        new() { Key = "breadcrumb", Label = "Breadcrumb", Icon = "breadcrumb", Group = "Navigation" },
+        new() { Key = "tree", Label = "Tree view", Icon = "tree", Group = "Collections" },
+        new() { Key = "split", Label = "Split view", Icon = "split", Group = "Layout" },
+        new() { Key = "command-bar", Label = "Command bar", Icon = "commands", Group = "Commands" },
+        new() { Key = "app-bar", Label = "App bar", Icon = "appbar", Group = "Commands" },
+        new() { Key = "flyout", Label = "Flyout", Icon = "flyout", Group = "Surfaces" },
+        new() { Key = "dialog", Label = "Content dialog", Icon = "dialog", Group = "Surfaces" }
+    ];
+
+    private readonly IReadOnlyList<MetroSelectOption> selectOptions =
+    [
+        new() { Value = "local", Label = "Local storage" },
+        new() { Value = "cloud", Label = "Cloud storage" },
+        new() { Value = "usb", Label = "USB device" }
+    ];
+    private readonly IReadOnlyList<string> listItems = ["Recent files", "Shared with me", "Favorites", "Offline files"];
+    private readonly IReadOnlyList<MetroPivotItem> pivotItems =
+    [new() { Key = "all", Header = "All" }, new() { Key = "recent", Header = "Recent" }, new() { Key = "favorites", Header = "Favorites" }];
+    private readonly IReadOnlyList<MetroCommandItem> commands =
+    [new() { Key = "new", Label = "New", Icon = "add" }, new() { Key = "refresh", Label = "Refresh", Icon = "refresh" }, new() { Key = "delete", Label = "Delete", Icon = "close", Disabled = true }];
+    private readonly IReadOnlyList<DemoRow> rows =
+    [new("Photos", "Synced", "1.2 GB"), new("Videos", "Uploading", "4.8 GB"), new("Documents", "Ready", "320 MB")];
+    private IEnumerable<IconRow> IconRows => MetroIconCatalog.Search(iconQuery, 96).Chunk(8).Select(names => new IconRow(names));
+    private readonly IReadOnlyList<MetroBreadcrumbItem> breadcrumbs =
+    [new() { Key = "home", Label = "Home" }, new() { Key = "documents", Label = "Documents" }, new() { Key = "reports", Label = "Reports" }];
+    private readonly IReadOnlyList<MetroTreeNode> treeNodes =
+    [
+        new() { Key = "storage", Label = "Storage", Icon = "folder", Children = [new() { Key = "pictures", Label = "Pictures", Icon = "folder" }, new() { Key = "music", Label = "Music", Icon = "folder" }] },
+        new() { Key = "downloads", Label = "Downloads", Icon = "download" }
+    ];
+
+    private readonly IReadOnlyList<MetroAppItem> apps =
+    [
+        new() { Label = "Mail", SubLabel = "3 unread", Icon = "✉", AccentColor = "#0078D7" },
+        new() { Label = "Calendar", SubLabel = "Today", Icon = "□", AccentColor = "#107C10" },
+        new() { Label = "People", SubLabel = "Contacts", Icon = "◎", AccentColor = "#E81123" },
+        new() { Label = "Settings", SubLabel = "System", Icon = "⚙", AccentColor = "#5C2D91" },
+        new() { Label = "Photos", SubLabel = "Library", Icon = "✦", AccentColor = "#008272" },
+        new() { Label = "Maps", SubLabel = "Explore", Icon = "⌖", AccentColor = "#CA5010" }
+    ];
+    private readonly IList<MetroAppItem> groupApps =
+    [
+        new() { Label = "Photos", Icon = "✦", AccentColor = "#0078D7", Size = MetroTileSize.Medium },
+        new() { Label = "Files", Icon = "□", AccentColor = "#CA5010", Size = MetroTileSize.Medium },
+        new() { Label = "Music", Icon = "♫", AccentColor = "#C239B3", Size = MetroTileSize.Small }
+    ];
+    private readonly IList<MetroAppItem> pinnedApps =
+    [new() { Label = "Photos", Icon = "✦", AccentColor = "#0078D7", Size = MetroTileSize.Small }, new() { Label = "Files", Icon = "□", AccentColor = "#CA5010", Size = MetroTileSize.Small }];
+    private readonly IList<MetroAppItem> systemApps =
+    [new() { Label = "Settings", Icon = "settings", AccentColor = "#5C2D91", Size = MetroTileSize.Small }];
+
+    private string CurrentTitle => navigationItems.FirstOrDefault(item => item.Key == selectedControl)?.Label ?? "Overview";
+    private string CurrentDescription => selectedControl switch
+    {
+        "tile" => "Metro tiles are square, colorful, and sized for touch.",
+        "progress" => "Progress uses segmented blocks and explicit motion states.",
+        "blade" => "Blades reveal context without leaving the current surface.",
+        _ => "A MetroBlazor component reference surface."
+    };
+
+    private Task SelectControl(string key)
+    {
+        selectedControl = key;
+        bladeOpen = false;
+        appBarOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private Task SetDarkTheme(MouseEventArgs _) => SetTheme(MetroThemeVariant.Dark);
+    private Task SetLightTheme(MouseEventArgs _) => SetTheme(MetroThemeVariant.Light);
+    private Task SetBlueTheme(MouseEventArgs _) => SetTheme(MetroThemeVariant.Blue);
+    private Task SetPurpleTheme(MouseEventArgs _) => SetTheme(MetroThemeVariant.Purple);
+
+    private Task SetTheme(MetroThemeVariant variant)
+    {
+        showcaseTheme = variant;
+        if (ThemeState is not null)
+        {
+            ThemeState.Variant = variant;
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task CloseBlade()
+    {
+        bladeOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private Task OpenBlade(MouseEventArgs _)
+    {
+        bladeOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private Task TileClicked(MouseEventArgs _)
+    {
+        tileStatus = "Tile activated. Try keyboard focus, Enter, Space, and touch input.";
+        return Task.CompletedTask;
+    }
+
+    private Task AppClicked(MetroAppItem item)
+    {
+        appStatus = $"{item.Label} activated.";
+        return Task.CompletedTask;
+    }
+
+    private Task OnNameChanged(string? value)
+    {
+        displayName = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task OnIconQueryChanged(string? value)
+    {
+        iconQuery = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private async Task Save(MouseEventArgs _)
+    {
+        saving = true;
+        saveStatus = "Saving...";
+        await Task.Delay(350);
+        saving = false;
+        saveStatus = $"Saved at {DateTime.Now:HH:mm:ss}.";
+    }
+
+    private Task IncreaseProgress(MouseEventArgs _)
+    {
+        progressValue = Math.Min(progressValue + 10, 100);
+        return Task.CompletedTask;
+    }
+
+    private Task DecreaseProgress(MouseEventArgs _)
+    {
+        progressValue = Math.Max(progressValue - 10, 0);
+        return Task.CompletedTask;
+    }
+
+    private Task ChangeTransition(MouseEventArgs _)
+    {
+        transitionKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task BreadcrumbClicked(MetroBreadcrumbItem item)
+    {
+        currentBreadcrumb = item.Key;
+        return Task.CompletedTask;
+    }
+
+    private Task TreeNodeClicked(MetroTreeNode node)
+    {
+        selectedTreeNode = node.Key;
+        treeStatus = $"{node.Label} selected.";
+        return Task.CompletedTask;
+    }
+
+    private Task GroupItemMoved(MetroAppItem item)
+    {
+        groupStatus = $"Moved {item.Label}.";
+        return Task.CompletedTask;
+    }
+
+    private Task GroupItemSizeChanged(MetroAppItem item)
+    {
+        groupStatus = $"{item.Label} is now {item.Size}.";
+        return Task.CompletedTask;
+    }
+
+    private Task SetRadio(string value) { radioValue = value; return Task.CompletedTask; }
+    private Task ListClicked(string item) { listStatus = $"{item} selected."; return Task.CompletedTask; }
+    private Task CommandClicked(MetroCommandItem command) { commandStatus = $"{command.Label} invoked."; return Task.CompletedTask; }
+    private Task ToggleAppBar(MouseEventArgs _) { appBarOpen = !appBarOpen; return Task.CompletedTask; }
+    private Task SetAppBar(bool value) { appBarOpen = value; return Task.CompletedTask; }
+    private Task CloseAppBar(MouseEventArgs _) { appBarOpen = false; return Task.CompletedTask; }
+    private Task OpenFlyout(MouseEventArgs _) { flyoutOpen = true; return Task.CompletedTask; }
+    private Task CloseFlyout() { flyoutOpen = false; return Task.CompletedTask; }
+    private Task OpenDialog(MouseEventArgs _) { dialogOpen = true; return Task.CompletedTask; }
+    private Task CloseDialog() { dialogOpen = false; return Task.CompletedTask; }
+    private Task RowClicked(DemoRow row) { rowStatus = $"{row.Name} selected."; return Task.CompletedTask; }
+
+    private sealed record DemoRow(string Name, string Status, string Size);
+    private sealed record IconRow(IReadOnlyList<string> Names);
+}

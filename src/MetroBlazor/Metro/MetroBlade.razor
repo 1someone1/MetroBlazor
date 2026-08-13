@@ -1,0 +1,29 @@
+@namespace MetroBlazor
+
+@if (Open)
+{
+    <div class="metro-blade-layer">
+        <button type="button" class="metro-blade-scrim" aria-label="Close details" @onclick="Close"></button>
+        <aside class="metro-blade" aria-label="@Title" role="complementary">
+            <header class="metro-blade-header">
+                <div>
+                    <p class="metro-blade-eyebrow">DETAILS</p>
+                    <h2>@Title</h2>
+                </div>
+                <button type="button" class="metro-blade-close" aria-label="Close details" @onclick="Close">×</button>
+            </header>
+            <div class="metro-blade-content">
+                @ChildContent
+            </div>
+        </aside>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private Task Close() => OnClose.InvokeAsync();
+}

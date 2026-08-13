@@ -1,0 +1,42 @@
+@namespace MetroBlazor
+
+<div class="metro-field @Class">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label for="@InputId">@Label</label>
+    }
+    <input id="@InputId"
+           class="metro-input"
+           type="@Type"
+           value="@Value"
+           placeholder="@Placeholder"
+           disabled="@Disabled"
+           readonly="@ReadOnly"
+           @oninput="OnInput"
+           @attributes="AdditionalAttributes" />
+</div>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string Type { get; set; } = "text";
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private readonly string GeneratedId = $"metro-input-{Guid.NewGuid():N}";
+
+    private string InputId => string.IsNullOrWhiteSpace(Id) ? GeneratedId : Id;
+
+    private async Task OnInput(ChangeEventArgs args)
+    {
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(args.Value?.ToString());
+        }
+    }
+}

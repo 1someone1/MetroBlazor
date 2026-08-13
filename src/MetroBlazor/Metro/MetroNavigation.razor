@@ -1,0 +1,69 @@
+@namespace MetroBlazor
+
+<nav class="metro-navigation-shell @Class" aria-label="@AriaLabel" @attributes="AdditionalAttributes">
+    @foreach (var group in GroupedItems)
+    {
+        @if (!string.IsNullOrWhiteSpace(group.Key))
+        {
+            <div class="metro-navigation-group">@group.Key</div>
+        }
+
+        @foreach (var item in group)
+        {
+            <button type="button" class="metro-navigation-item @(item.Key == SelectedKey ? "selected" : null)" aria-current="@(item.Key == SelectedKey ? "page" : null)" @onclick="@(() => SelectItem(item))">
+                @if (!string.IsNullOrWhiteSpace(item.Icon))
+                {
+                    <MetroIcon Name="@item.Icon" Size="MetroIconSize.Small" />
+                }
+                <span>@item.Label</span>
+                @if (item.Children is { Count: > 0 })
+                {
+                    <span class="metro-navigation-expander">@(expandedKeys.Contains(item.Key) ? "−" : "+")</span>
+                }
+            </button>
+            @if (expandedKeys.Contains(item.Key) && item.Children is not null)
+            {
+                <div class="metro-navigation-children">
+                    @foreach (var child in item.Children)
+                    {
+                        <button type="button" class="metro-navigation-item child @(child.Key == SelectedKey ? "selected" : null)" @onclick="@(() => SelectItem(child))">
+                            @if (!string.IsNullOrWhiteSpace(child.Icon))
+                            {
+                                <MetroIcon Name="@child.Icon" Size="MetroIconSize.Small" />
+                            }
+                            <span>@child.Label</span>
+                        </button>
+                    }
+                </div>
+            }
+        }
+    }
+</nav>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<MetroNavigationItem> Items { get; set; } = Array.Empty<MetroNavigationItem>();
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public EventCallback<string> SelectedKeyChanged { get; set; }
+    [Parameter] public EventCallback<MetroNavigationItem> ItemClick { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Navigation";
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private readonly HashSet<string> expandedKeys = new();
+    private IEnumerable<IGrouping<string?, MetroNavigationItem>> GroupedItems => Items.GroupBy(item => item.Group);
+
+    private async Task SelectItem(MetroNavigationItem item)
+    {
+        if (item.Children is { Count: > 0 })
+        {
+            if (!expandedKeys.Add(item.Key))
+            {
+                expandedKeys.Remove(item.Key);
+            }
+        }
+
+        await SelectedKeyChanged.InvokeAsync(item.Key);
+        await ItemClick.InvokeAsync(item);
+    }
+
+}

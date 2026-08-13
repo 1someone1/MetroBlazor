@@ -1,0 +1,30 @@
+@namespace MetroBlazor
+
+<div class="metro-field @Class">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label for="@InputId">@Label</label>
+    }
+    <select id="@InputId" class="metro-select" value="@Value" disabled="@Disabled" @onchange="OnChanged" @attributes="AdditionalAttributes">
+        @foreach (var option in Options)
+        {
+            <option value="@option.Value" disabled="@option.Disabled">@option.Label</option>
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter, EditorRequired] public IEnumerable<MetroSelectOption> Options { get; set; } = Array.Empty<MetroSelectOption>();
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private readonly string GeneratedId = $"metro-select-{Guid.NewGuid():N}";
+    private string InputId => string.IsNullOrWhiteSpace(Id) ? GeneratedId : Id;
+
+    private Task OnChanged(ChangeEventArgs args) => ValueChanged.InvokeAsync(args.Value?.ToString());
+}

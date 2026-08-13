@@ -1,0 +1,61 @@
+@namespace MetroBlazor.Showcase.Components
+
+<section class="showcase-section" aria-labelledby="demo-section-heading">
+    <div class="showcase-section-heading">
+        <p class="showcase-kicker">@Kicker</p>
+        <MetroText TextStyle="MetroTextStyle.Header" id="demo-section-heading">@Title</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Body">@Description</MetroText>
+    </div>
+    @ChildContent
+    <details class="showcase-code">
+        <summary>View code</summary>
+        <pre><code>@DisplayCode</code></pre>
+    </details>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Kicker { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Description { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+
+    private string DisplayCode => Samples.TryGetValue(Title, out var code)
+        ? code
+        : $"<Metro{Title.Replace(" ", string.Empty)} />";
+
+    private static readonly IReadOnlyDictionary<string, string> Samples = new Dictionary<string, string>
+    {
+        ["Tile"] = "<MetroTile Label=\"Photos\" Icon=\"✦\" AccentColor=\"#0078D7\" />",
+        ["Text input"] = "<MetroInput Label=\"Display name\" @bind-Value=\"name\" />",
+        ["Page transition"] = "<MetroPageTransition TransitionKey=\"@pageKey\">\n    <ChildContent />\n</MetroPageTransition>",
+        ["App frame"] = "<MetroAppFrame>\n    <Header><MetroText TextStyle=\"MetroTextStyle.Subheader\">Files</MetroText></Header>\n    <ChildContent>...</ChildContent>\n</MetroAppFrame>",
+        ["Tile group"] = "<MetroTileGroup Items=\"tiles\" ItemMoved=\"OnTileMoved\" ItemSizeChanged=\"OnTileSizeChanged\" />",
+        ["Semantic zoom"] = "<MetroSemanticZoom @bind-ZoomedOut=\"zoomedOut\">\n    <ZoomedInContent>...</ZoomedInContent>\n    <ZoomedOutContent>...</ZoomedOutContent>\n</MetroSemanticZoom>",
+        ["Breadcrumb"] = "<MetroBreadcrumb Items=\"breadcrumbs\" CurrentKey=\"currentKey\" />",
+        ["Tree view"] = "<MetroTreeView Nodes=\"nodes\" SelectedKey=\"selectedKey\" />",
+        ["Split view"] = "<MetroSplitView>\n    <PaneContent>...</PaneContent>\n    <ChildContent>...</ChildContent>\n</MetroSplitView>",
+        ["Buttons"] = "<MetroButton OnClick=\"Save\">Save</MetroButton>\n<MetroButton Icon=\"arrow-left\" IconOnly Bordered AriaLabel=\"Back\" />\n<MetroButton Icon=\"search\" IconOnly AriaLabel=\"Search\" />",
+        ["Typography"] = "<MetroText TextStyle=\"MetroTextStyle.Display\">Display title</MetroText>\n<MetroText TextStyle=\"MetroTextStyle.Body\">Body copy</MetroText>\n<MetroText TextStyle=\"MetroTextStyle.Caption\">Caption</MetroText>",
+        ["Toggle"] = "<MetroToggle Label=\"Enable sync\" @bind-Checked=\"enabled\" />",
+        ["Checkbox"] = "<MetroCheckbox Label=\"Use cellular data\" @bind-Checked=\"enabled\" />",
+        ["Progress"] = "<MetroProgress Value=\"@progress\" />\n<MetroProgress IsIndeterminate=\"true\" />",
+        ["Badge"] = "<MetroBadge>Syncing</MetroBadge>",
+        ["App grid"] = "<MetroAppGrid Items=\"apps\" Columns=\"4\" />",
+        ["Sidebar"] = "<MetroSidebar @bind-Collapsed=\"collapsed\">\n    <MetroNavigation Items=\"items\" />\n</MetroSidebar>",
+        ["Blade"] = "<MetroBlade Open=\"@open\" Title=\"Notification\" OnClose=\"Close\">... </MetroBlade>",
+        ["Icons"] = "<MetroInput Placeholder=\"Search icons\" @bind-Value=\"query\" />\n<MetroIcon Name=\"settings\" Size=\"MetroIconSize.Large\" />",
+        ["Select"] = "<MetroSelect Label=\"Storage\" Options=\"options\" @bind-Value=\"value\" />",
+        ["Radio"] = "<MetroRadio Label=\"Automatic\" GroupName=\"mode\" Value=\"automatic\" />",
+        ["Slider"] = "<MetroSlider Label=\"Brightness\" @bind-Value=\"brightness\" />",
+        ["Search box"] = "<MetroSearchBox Placeholder=\"Search files\" @bind-Value=\"query\" />",
+        ["List view"] = "<MetroListView TItem=\"FileItem\" Items=\"files\" ItemClick=\"OpenFile\" />",
+        ["Pivot"] = "<MetroPivot Items=\"pages\" @bind-SelectedKey=\"selectedPage\" />",
+        ["Hub"] = "<MetroHub Eyebrow=\"HOME\" Title=\"Your files\">...</MetroHub>",
+        ["Navigation"] = "<MetroNavigation Items=\"items\" SelectedKey=\"selectedKey\" />",
+        ["Command bar"] = "<MetroCommandBar Items=\"commands\" CommandClick=\"Execute\" />",
+        ["App bar"] = "<MetroAppBar @bind-Open=\"open\">...</MetroAppBar>",
+        ["Flyout"] = "<MetroFlyout Open=\"@open\" Title=\"Quick actions\">...</MetroFlyout>",
+        ["Content dialog"] = "<MetroContentDialog Open=\"@open\" Title=\"Confirm\" OnConfirm=\"Confirm\">...</MetroContentDialog>",
+        ["Data grid"] = "<MetroDataGrid TItem=\"FileItem\" Items=\"files\">\n    <HeaderTemplate>...</HeaderTemplate>\n    <RowTemplate Context=\"file\">...</RowTemplate>\n</MetroDataGrid>"
+    };
+}

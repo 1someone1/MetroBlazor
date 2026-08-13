@@ -1,0 +1,60 @@
+## .NET build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+packages/
+
+## Test results
+[Tt]est[Rr]esult*/
+[Tt]est[Rr]esult[s]/
+*.trx
+*.coverage
+*.coveragexml
+*.logger.html
+
+## Rider / VS
+.idea/
+.vs/
+.vscode/
+*.DotSettings.user
+
+## Misc
+*.tmp
+*.log
+*_i.c
+*_p.c
+*.pch
+*.idb
+*.ilk
+*.pdb
+*.ipdb
+*.obj
+*.cache
+appsettings.Development.json
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Local database / runtime data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# MetroBlazor local output
+artifacts/
+

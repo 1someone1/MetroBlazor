@@ -1,0 +1,28 @@
+@typeparam TItem
+@namespace MetroBlazor
+
+<div class="metro-list-view @Class" role="list" @attributes="AdditionalAttributes">
+    @foreach (var item in Items)
+    {
+        <button type="button" class="metro-list-item" role="listitem" @onclick="@(() => SelectItem(item))">
+            @if (ItemTemplate is not null)
+            {
+                @ItemTemplate(item)
+            }
+            else
+            {
+                @item?.ToString()
+            }
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<TItem> Items { get; set; } = Array.Empty<TItem>();
+    [Parameter] public RenderFragment<TItem>? ItemTemplate { get; set; }
+    [Parameter] public EventCallback<TItem> ItemClick { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task SelectItem(TItem item) => ItemClick.InvokeAsync(item);
+}

@@ -1,0 +1,21 @@
+@namespace MetroBlazor
+
+@if (Open)
+{
+    <footer class="metro-app-bar open @Class" @attributes="AdditionalAttributes">
+        <button type="button" class="metro-app-bar-toggle" aria-label="Close app bar" aria-expanded="true" @onclick="Close">
+            <MetroIcon Name="close" Size="MetroIconSize.Medium" />
+        </button>
+        <div class="metro-app-bar-commands">@ChildContent</div>
+    </footer>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task Close() => OpenChanged.InvokeAsync(false);
+}

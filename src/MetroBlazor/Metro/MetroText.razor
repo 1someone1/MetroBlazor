@@ -1,0 +1,33 @@
+@namespace MetroBlazor
+
+@switch (TextStyle)
+{
+    case MetroTextStyle.Display:
+        <h1 class="metro-text metro-text-display" @attributes="AdditionalAttributes">@ChildContent</h1>
+        break;
+    case MetroTextStyle.Header:
+        <h2 class="metro-text metro-text-header" @attributes="AdditionalAttributes">@ChildContent</h2>
+        break;
+    case MetroTextStyle.Subheader:
+        <h3 class="metro-text metro-text-subheader" @attributes="AdditionalAttributes">@ChildContent</h3>
+        break;
+    case MetroTextStyle.Caption:
+        <small class="metro-text metro-text-caption" @attributes="AdditionalAttributes">@ChildContent</small>
+        break;
+    case MetroTextStyle.Link:
+        <a class="metro-text metro-text-link" href="@Href" @attributes="AdditionalAttributes">@ChildContent</a>
+        break;
+    case MetroTextStyle.Label:
+        <span class="metro-text metro-text-label" @attributes="AdditionalAttributes">@ChildContent</span>
+        break;
+    default:
+        <p class="metro-text metro-text-body" @attributes="AdditionalAttributes">@ChildContent</p>
+        break;
+}
+
+@code {
+    [Parameter] public MetroTextStyle TextStyle { get; set; } = MetroTextStyle.Body;
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string Href { get; set; } = "#";
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}

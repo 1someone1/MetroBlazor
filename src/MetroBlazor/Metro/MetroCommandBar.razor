@@ -1,0 +1,26 @@
+@namespace MetroBlazor
+
+<div class="metro-command-bar @Class" role="toolbar" aria-label="@AriaLabel" @attributes="AdditionalAttributes">
+    @foreach (var command in Items)
+    {
+        <button type="button" class="metro-command" disabled="@command.Disabled" aria-label="@command.Label" @onclick="@(() => Execute(command))">
+            @if (!string.IsNullOrWhiteSpace(command.Icon))
+            {
+                <MetroIcon Name="@command.Icon" Size="MetroIconSize.Small" />
+            }
+            <span>@command.Label</span>
+        </button>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<MetroCommandItem> Items { get; set; } = Array.Empty<MetroCommandItem>();
+    [Parameter] public EventCallback<MetroCommandItem> CommandClick { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Commands";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task Execute(MetroCommandItem command) => command.Disabled ? Task.CompletedTask : CommandClick.InvokeAsync(command);
+}

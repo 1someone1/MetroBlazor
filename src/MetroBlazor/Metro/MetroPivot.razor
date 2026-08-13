@@ -1,0 +1,31 @@
+@namespace MetroBlazor
+
+<div class="metro-pivot @Class" @attributes="AdditionalAttributes">
+    <div class="metro-pivot-tabs" role="tablist" aria-label="@AriaLabel">
+        @foreach (var item in Items)
+        {
+            <button type="button"
+                    role="tab"
+                    aria-selected="@(item.Key == SelectedKey ? "true" : "false")"
+                    class="metro-pivot-tab @(item.Key == SelectedKey ? "selected" : null)"
+                    @onclick="@(() => Select(item.Key))">
+                @item.Header
+            </button>
+        }
+    </div>
+    <div class="metro-pivot-content" role="tabpanel">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<MetroPivotItem> Items { get; set; } = Array.Empty<MetroPivotItem>();
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public EventCallback<string> SelectedKeyChanged { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Sections";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task Select(string key) => SelectedKeyChanged.InvokeAsync(key);
+}

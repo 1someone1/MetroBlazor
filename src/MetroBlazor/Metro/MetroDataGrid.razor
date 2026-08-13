@@ -1,0 +1,28 @@
+@typeparam TItem
+@namespace MetroBlazor
+
+<div class="metro-data-grid-wrap @Class">
+    <table class="metro-data-grid" @attributes="AdditionalAttributes">
+        <thead><tr>@HeaderTemplate</tr></thead>
+        <tbody>
+            @foreach (var item in Items)
+            {
+                <tr @onclick="@(() => RowClick.InvokeAsync(item))">
+                    @if (RowTemplate is not null)
+                    {
+                        @RowTemplate(item)
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<TItem> Items { get; set; } = Array.Empty<TItem>();
+    [Parameter, EditorRequired] public RenderFragment? HeaderTemplate { get; set; }
+    [Parameter, EditorRequired] public RenderFragment<TItem>? RowTemplate { get; set; }
+    [Parameter] public EventCallback<TItem> RowClick { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}

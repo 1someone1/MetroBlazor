@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/showcase/">
+    <Project Path="showcase/MetroBlazor.Showcase/MetroBlazor.Showcase.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/MetroBlazor/MetroBlazor.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MetroBlazor.Tests/MetroBlazor.Tests.csproj" />
+  </Folder>
+</Solution>

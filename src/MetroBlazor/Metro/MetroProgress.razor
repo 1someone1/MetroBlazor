@@ -1,0 +1,32 @@
+@namespace MetroBlazor
+
+<div class="metro-progress @(IsIndeterminate ? "metro-progress-indeterminate" : null)"
+     role="progressbar"
+     aria-valuemin="0"
+     aria-valuemax="100"
+     aria-valuenow="@(IsIndeterminate ? null : Value)"
+     aria-label="@AriaLabel">
+    @if (IsIndeterminate)
+    {
+        @for (var index = 0; index < 5; index++)
+        {
+            <span class="metro-progress-indicator" style="--metro-progress-delay: @(index * 90)ms;"></span>
+        }
+    }
+    else
+    {
+        @for (var index = 0; index < Segments; index++)
+        {
+            <span class="metro-progress-segment @(index < FilledSegments ? "filled" : null)"></span>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public double Value { get; set; }
+    [Parameter] public int Segments { get; set; } = 10;
+    [Parameter] public bool IsIndeterminate { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Progress";
+
+    private int FilledSegments => Math.Clamp((int)Math.Ceiling(Math.Clamp(Value, 0, 100) / 100 * Math.Max(Segments, 1)), 0, Math.Max(Segments, 1));
+}

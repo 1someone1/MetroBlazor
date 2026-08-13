@@ -1,0 +1,63 @@
+@namespace MetroBlazor
+
+<div class="metro-tree-view @Class" role="tree" @attributes="AdditionalAttributes">
+    @foreach (var node in Nodes)
+    {
+        <div class="metro-tree-node" role="treeitem" aria-expanded="@(node.Children.Count > 0 ? expandedKeys.Contains(node.Key).ToString().ToLowerInvariant() : null)">
+            <button type="button" class="metro-tree-row @(node.Key == SelectedKey ? "selected" : null)" @onclick="@(() => Select(node))">
+                @if (node.Children.Count > 0)
+                {
+                    <span class="metro-tree-expander">@(expandedKeys.Contains(node.Key) ? "−" : "+")</span>
+                }
+                else
+                {
+                    <span class="metro-tree-expander"></span>
+                }
+                @if (!string.IsNullOrWhiteSpace(node.Icon))
+                {
+                    <MetroIcon Name="@node.Icon" Size="MetroIconSize.Small" />
+                }
+                <span>@node.Label</span>
+            </button>
+            @if (node.Children.Count > 0 && expandedKeys.Contains(node.Key))
+            {
+                <div class="metro-tree-children">
+                    @foreach (var child in node.Children)
+                    {
+                        <button type="button" class="metro-tree-row @(child.Key == SelectedKey ? "selected" : null)" @onclick="@(() => Select(child))">
+                            <span class="metro-tree-expander"></span>
+                            @if (!string.IsNullOrWhiteSpace(child.Icon))
+                            {
+                                <MetroIcon Name="@child.Icon" Size="MetroIconSize.Small" />
+                            }
+                            <span>@child.Label</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<MetroTreeNode> Nodes { get; set; } = Array.Empty<MetroTreeNode>();
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public EventCallback<MetroTreeNode> NodeClick { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private readonly HashSet<string> expandedKeys = new();
+
+    private Task Select(MetroTreeNode node)
+    {
+        if (node.Children.Count > 0)
+        {
+            if (!expandedKeys.Add(node.Key))
+            {
+                expandedKeys.Remove(node.Key);
+            }
+        }
+
+        return NodeClick.InvokeAsync(node);
+    }
+}

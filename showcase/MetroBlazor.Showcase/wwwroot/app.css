@@ -1,0 +1,212 @@
+:root {
+    font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+    margin: 0;
+    color: var(--metro-text);
+    background: var(--metro-background);
+}
+
+.showcase-theme-surface {
+    min-height: 100vh;
+    color: var(--metro-text);
+    background: var(--metro-background);
+}
+
+.showcase-docs-shell {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.showcase-docs-main {
+    flex: 1;
+    width: 0;
+    height: 100vh;
+    max-width: calc(100% - 248px);
+    margin: 0 auto;
+    padding: 56px 96px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.showcase-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 32px;
+    align-items: end;
+    margin-bottom: 72px;
+}
+
+.showcase-eyebrow,
+.showcase-kicker {
+    margin: 0 0 10px;
+    color: var(--metro-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+
+.showcase-control-card h3 {
+    margin: 0;
+    font-weight: 400;
+}
+
+.showcase-header .showcase-lede { max-width: 640px; }
+
+.showcase-lede,
+.showcase-section-heading > p:last-child {
+    max-width: 640px;
+    color: var(--metro-text-secondary);
+    line-height: 1.6;
+}
+
+.showcase-header-actions,
+.showcase-inline-controls,
+.showcase-card-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.showcase-header-actions { flex-wrap: wrap; justify-content: flex-end; }
+.showcase-theme-switcher { display: flex; flex-wrap: wrap; gap: 4px; }
+.showcase-theme-switcher .metro-button { min-height: 32px; padding: 0 10px; font-size: 12px; }
+
+.showcase-section {
+    margin-top: 72px;
+}
+
+.showcase-overview {
+    max-width: 900px;
+}
+
+.showcase-overview .metro-text-header {
+    margin: 0 0 16px;
+    font-size: 48px;
+    font-weight: 400;
+}
+
+.showcase-overview > .metro-text-body {
+    max-width: 680px;
+    color: var(--metro-text-secondary);
+    line-height: 1.6;
+}
+
+.showcase-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px;
+    margin-top: 40px;
+}
+
+.showcase-overview-item {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 74px;
+    padding: 14px 18px;
+    border: 0;
+    border-left: 3px solid transparent;
+    color: var(--metro-text);
+    background: var(--metro-surface);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.showcase-overview-item:hover {
+    border-left-color: var(--metro-accent);
+    background: color-mix(in srgb, var(--metro-accent) 12%, var(--metro-surface));
+}
+
+.showcase-overview-item strong,
+.showcase-overview-item small {
+    display: block;
+}
+
+.showcase-overview-item small {
+    margin-top: 4px;
+    color: var(--metro-text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.showcase-overview-icon { color: var(--metro-accent); font-size: 22px; text-align: center; }
+.showcase-overview-arrow { color: var(--metro-text-secondary); font-size: 22px; }
+
+.showcase-section-heading {
+    margin-bottom: 28px;
+}
+
+.showcase-section h2 {
+    font-size: 38px;
+}
+
+.showcase-tile-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.showcase-control-grid,
+.showcase-feedback-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.showcase-feedback-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.showcase-control-card {
+    display: grid;
+    align-content: start;
+    gap: 20px;
+    min-height: 150px;
+    padding: 24px;
+    border-left: 3px solid color-mix(in srgb, var(--metro-text) 22%, transparent);
+    color: var(--metro-text);
+    background: var(--metro-surface);
+}
+
+.showcase-single-demo { max-width: 680px; }
+.showcase-sidebar-preview { max-width: 300px; min-height: 420px; padding: 0; }
+.showcase-blade-rule { height: 1px; margin: 28px 0; background: rgba(255, 255, 255, 0.16); }
+.showcase-list-item-content { display: flex; align-items: center; gap: 16px; }
+.showcase-list-image { display: inline-grid; place-items: center; width: 44px; height: 44px; color: #fff; background: var(--metro-accent); }
+.showcase-stack-demo { justify-items: start; }
+.showcase-typography-sample { display: grid; gap: 24px; max-width: 720px; padding: 28px 0; }
+.showcase-type-number { color: var(--metro-accent); font-size: 52px; font-weight: 300; line-height: 1; }
+.showcase-icon-button-example { display: inline-grid; justify-items: center; gap: 8px; }
+.showcase-icon-button-example small { color: var(--metro-text-secondary); font-size: 11px; }
+.showcase-icon-row { display: grid; grid-template-columns: repeat(8, minmax(70px, 1fr)); gap: 8px; }
+.showcase-icon-item { display: grid; justify-items: center; gap: 8px; min-height: 72px; padding: 8px 4px; color: var(--metro-text-secondary); font-size: 11px; text-align: center; }
+.showcase-icon-item:hover { color: var(--metro-text); background: color-mix(in srgb, var(--metro-accent) 14%, transparent); }
+.showcase-semantic-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.showcase-code { margin-top: 40px; border-top: 1px solid color-mix(in srgb, var(--metro-text) 20%, transparent); }
+.showcase-code summary { padding: 16px 0; color: var(--metro-accent); font-size: 14px; cursor: pointer; }
+.showcase-code pre { margin: 0; padding: 20px; overflow-x: auto; color: var(--metro-text); background: color-mix(in srgb, var(--metro-surface) 78%, #000); font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; line-height: 1.6; white-space: pre; }
+
+.showcase-control-card h3 { font-size: 21px; }
+.showcase-card-title { justify-content: space-between; }
+.showcase-card-title strong { color: var(--metro-accent); font-size: 22px; font-weight: 400; }
+.showcase-value,
+.showcase-status { margin: 0; color: var(--metro-text-secondary); font-size: 13px; }
+.showcase-status { margin-top: 16px; }
+
+@media (max-width: 760px) {
+    .showcase-docs-shell { display: block; }
+    .showcase-docs-shell { height: auto; overflow: visible; }
+    .showcase-docs-main { width: auto; height: auto; margin: 0; padding: 32px 16px 72px; overflow: visible; }
+    .showcase-header { display: block; margin-bottom: 52px; }
+    .showcase-header-actions { margin-top: 24px; }
+    .showcase-control-grid,
+    .showcase-feedback-grid { grid-template-columns: 1fr; }
+    .showcase-section { margin-top: 52px; }
+    .showcase-overview-grid { grid-template-columns: 1fr; }
+    .showcase-semantic-groups { grid-template-columns: 1fr; }
+    .showcase-icon-row { grid-template-columns: repeat(4, minmax(60px, 1fr)); }
+}

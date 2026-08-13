@@ -1,0 +1,24 @@
+@namespace MetroBlazor
+
+<section class="metro-semantic-zoom @Class" @attributes="AdditionalAttributes">
+    @if (ZoomedOut)
+    {
+        <div class="metro-semantic-zoom-out">@ZoomedOutContent</div>
+    }
+    else
+    {
+        <div class="metro-semantic-zoom-in">@ZoomedInContent</div>
+    }
+    <button type="button" class="metro-semantic-zoom-toggle" aria-label="@(ZoomedOut ? "Zoom in" : "Zoom out")" @onclick="Toggle">@(ZoomedOut ? "Zoom in" : "Zoom out")</button>
+</section>
+
+@code {
+    [Parameter] public bool ZoomedOut { get; set; }
+    [Parameter] public EventCallback<bool> ZoomedOutChanged { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? ZoomedInContent { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? ZoomedOutContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task Toggle() => ZoomedOutChanged.InvokeAsync(!ZoomedOut);
+}

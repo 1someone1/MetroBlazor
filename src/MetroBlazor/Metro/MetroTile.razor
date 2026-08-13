@@ -1,0 +1,107 @@
+@namespace MetroBlazor
+@implements IDisposable
+
+<button type="button"
+        class="@CssClass"
+        style="@Style"
+        disabled="@Disabled"
+        aria-pressed="@(Selected ? "true" : "false")"
+        aria-label="@Label"
+        draggable="@(Draggable ? "true" : "false")"
+        @onclick="OnTileClick"
+        @ondragstart="HandleDragStart"
+        @ondragend="HandleDragEnd"
+        @attributes="AdditionalAttributes">
+    @if (Live && LiveContent is not null && showingLive)
+    {
+        <span class="metro-tile-live-content">@LiveContent</span>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <span class="metro-tile-icon" aria-hidden="true">@Icon</span>
+        }
+        <span class="metro-tile-label">@Label</span>
+        @if (!string.IsNullOrEmpty(SubLabel))
+        {
+            <span class="metro-tile-sublabel">@SubLabel</span>
+        }
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+    }
+</button>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter] public string? SubLabel { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? AccentColor { get; set; }
+    [Parameter] public MetroTileSize Size { get; set; } = MetroTileSize.Medium;
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Draggable { get; set; }
+    [Parameter] public EventCallback<DragEventArgs> OnDragStart { get; set; }
+    [Parameter] public EventCallback<DragEventArgs> OnDragEnd { get; set; }
+    [Parameter] public bool Live { get; set; }
+    [Parameter] public int LiveInterval { get; set; } = 4000;
+    [Parameter] public RenderFragment? LiveContent { get; set; }
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass => string.Join(' ', new[]
+    {
+        "metro-tile",
+        $"metro-tile-{Size.ToString().ToLowerInvariant()}",
+        Selected ? "selected" : null,
+        Disabled ? "disabled" : null,
+        Class
+    }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private string? Style => string.IsNullOrWhiteSpace(AccentColor)
+        ? null
+        : $"--metro-tile-accent: {AccentColor};";
+
+    private Timer? liveTimer;
+    private bool showingLive;
+
+    protected override void OnParametersSet()
+    {
+        if (Live && LiveContent is not null && liveTimer is null)
+        {
+            liveTimer = new Timer(_ => ToggleLiveContent(), null, LiveInterval, LiveInterval);
+        }
+        else if ((!Live || LiveContent is null) && liveTimer is not null)
+        {
+            liveTimer.Dispose();
+            liveTimer = null;
+            showingLive = false;
+        }
+    }
+
+    private void ToggleLiveContent()
+    {
+        _ = InvokeAsync(() =>
+        {
+            showingLive = !showingLive;
+            StateHasChanged();
+        });
+    }
+
+    private async Task OnTileClick(MouseEventArgs e)
+    {
+        if (!Disabled && OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(e);
+        }
+    }
+
+    private Task HandleDragStart(DragEventArgs args) => OnDragStart.InvokeAsync(args);
+    private Task HandleDragEnd(DragEventArgs args) => OnDragEnd.InvokeAsync(args);
+
+    public void Dispose() => liveTimer?.Dispose();
+}

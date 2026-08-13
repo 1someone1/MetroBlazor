@@ -1,0 +1,49 @@
+@namespace MetroBlazor
+@implements IDisposable
+
+<CascadingValue Value="ThemeState" IsFixed="false">
+    <FluentDesignTheme StorageName="metroblazor-theme" Mode="@EffectiveMode">
+        <div class="metro-root" data-theme="@ThemeName">
+            @ChildContent
+        </div>
+    </FluentDesignTheme>
+</CascadingValue>
+
+<HeadContent>
+    <link rel="stylesheet" href="_content/MetroBlazor/metro.css" />
+</HeadContent>
+
+@code {
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public DesignThemeModes Mode { get; set; } = DesignThemeModes.Dark;
+    [Parameter] public MetroThemeVariant? Variant { get; set; }
+
+    private MetroThemeState ThemeState { get; } = new(MetroThemeVariant.Dark);
+    private bool initialized;
+    private string ThemeName => ThemeState.Variant.ToString().ToLowerInvariant();
+    private DesignThemeModes EffectiveMode => ThemeState.Variant == MetroThemeVariant.Light
+        ? DesignThemeModes.Light
+        : DesignThemeModes.Dark;
+
+    protected override void OnInitialized()
+    {
+        ThemeState.Variant = Variant ?? (Mode == DesignThemeModes.Light ? MetroThemeVariant.Light : MetroThemeVariant.Dark);
+        ThemeState.Changed += OnThemeChanged;
+        initialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (initialized && Variant.HasValue && ThemeState.Variant != Variant.Value)
+        {
+            ThemeState.Variant = Variant.Value;
+        }
+    }
+
+    private void OnThemeChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ThemeState.Changed -= OnThemeChanged;
+    }
+}
