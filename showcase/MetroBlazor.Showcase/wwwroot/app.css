@@ -32,37 +32,59 @@ body {
     color: #fff;
 }
 
-.loading-progress {
-    position: relative;
+/* Blazor WebAssembly boot splash screen. This is plain HTML/CSS because Blazor
+   components are not yet available while the runtime is loading. */
+.loading-shell {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 40px;
+    background: #1b1b1b;
+    color: #ffffff;
+    font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.loading-brand {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.loading-logo {
+    width: 64px;
+    height: 64px;
     display: block;
-    width: 8rem;
-    height: 8rem;
-    margin: 20vh auto 1rem auto;
 }
 
-.loading-progress circle {
-    fill: none;
-    stroke: #e0e0e0;
-    stroke-width: 0.6rem;
-    transform-origin: 50% 50%;
-    transform: rotate(-90deg);
+.loading-logo-text {
+    font-size: 42px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
 }
 
-.loading-progress circle:last-child {
-    stroke: #0078d7;
-    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-    transition: stroke-dasharray 0.05s ease-in-out;
+.loading-progress-metro {
+    position: relative;
+    width: 200px;
+    height: 8px;
+    margin: 0 auto;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
 }
 
-.loading-progress-text {
+.loading-progress-dot {
     position: absolute;
-    text-align: center;
-    font-weight: bold;
-    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+    left: -8px;
+    width: 8px;
+    height: 8px;
+    background: #7027d5;
+    animation: loading-progress-block 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) var(--metro-loading-delay, 0ms) infinite;
 }
 
-.loading-progress-text:after {
-    content: var(--blazor-load-percentage-text, "Loading");
+@keyframes loading-progress-block {
+    from { left: -8px; }
+    to { left: calc(100% + 8px); }
 }
 
 .showcase-theme-surface {
@@ -71,20 +93,16 @@ body {
     background: var(--metro-background);
 }
 
-.showcase-docs-shell {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
+.showcase-brand-icon {
+    width: 28px;
+    height: 28px;
+    display: block;
 }
 
 .showcase-docs-main {
-    flex: 1;
-    width: 0;
-    height: 100vh;
-    max-width: calc(100% - 248px);
+    max-width: 1180px;
     margin: 0 auto;
     padding: 56px 96px;
-    overflow-y: auto;
     box-sizing: border-box;
 }
 
@@ -96,7 +114,6 @@ body {
     margin-bottom: 72px;
 }
 
-.showcase-eyebrow,
 .showcase-kicker {
     margin: 0 0 10px;
     color: var(--metro-accent);
@@ -104,6 +121,8 @@ body {
     font-weight: 700;
     letter-spacing: 0.16em;
 }
+
+.metro-breadcrumb { margin-bottom: 12px; }
 
 .showcase-control-card h3 {
     margin: 0;
@@ -231,6 +250,7 @@ body {
 
 .showcase-single-demo { max-width: 680px; }
 .showcase-sidebar-preview { max-width: 300px; min-height: 420px; padding: 0; }
+.showcase-sidebar-preview .metro-sidebar { position: static; height: auto; min-height: 420px; }
 .showcase-blade-rule { height: 1px; margin: 28px 0; background: rgba(255, 255, 255, 0.16); }
 .showcase-list-item-content { display: flex; align-items: center; gap: 16px; }
 .showcase-list-image { display: inline-grid; place-items: center; width: 44px; height: 44px; color: #fff; background: var(--metro-accent); }
@@ -255,9 +275,8 @@ body {
 .showcase-status { margin-top: 16px; }
 
 @media (max-width: 760px) {
-    .showcase-docs-shell { display: block; }
-    .showcase-docs-shell { height: auto; overflow: visible; }
-    .showcase-docs-main { width: auto; height: auto; margin: 0; padding: 32px 16px 72px; overflow: visible; }
+    /* metro.css turns the sidebar into a push drawer; content translates off-screen. */
+    .showcase-docs-main { max-width: none; padding: 24px 16px 64px; }
     .showcase-header { display: block; margin-bottom: 52px; }
     .showcase-header-actions { margin-top: 24px; }
     .showcase-control-grid,

@@ -130,6 +130,7 @@ ThemeState!.Variant = MetroThemeVariant.Blue;
 
 ### Layout
 
+- `MetroLayout` — responsive app shell: persistent sidebar rail on desktop, overlay drawer with scrim on mobile
 - `MetroAppFrame` — application frame with header and content regions
 - `MetroSplitView` — pane and content layout
 
@@ -182,7 +183,7 @@ size cycling.
 ## Showcase
 
 Run the interactive showcase to browse every component with live themes, icons, and
-code examples:
+code examples. The showcase itself is built with `MetroLayout`:
 
 ```bash
 dotnet run --project showcase/MetroBlazor.Showcase

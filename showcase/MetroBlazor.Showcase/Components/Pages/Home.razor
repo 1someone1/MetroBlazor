@@ -4,17 +4,21 @@
 <PageTitle>MetroBlazor Showcase</PageTitle>
 
 <div class="showcase-theme-surface" data-theme="@CurrentThemeVariant.ToString().ToLowerInvariant()">
-<div class="showcase-docs-shell">
-    <MetroSidebar Collapsed="@sidebarCollapsed" CollapsedChanged="@(value => sidebarCollapsed = value)">
+<MetroLayout Brand="METROBLAZOR" SidebarCollapsed="@sidebarCollapsed" SidebarCollapsedChanged="@(value => sidebarCollapsed = value)">
+    <BrandIcon>
+        <img class="showcase-brand-icon" src="metroblazor-icon.svg" alt="" />
+    </BrandIcon>
+    <SidebarContent>
         <MetroNavigation Items="navigationItems"
                          SelectedKey="@selectedControl"
                          SelectedKeyChanged="SelectControl" />
-    </MetroSidebar>
+    </SidebarContent>
 
-    <main class="showcase-docs-main">
+    <ChildContent>
+    <div class="showcase-docs-main">
         <header class="showcase-header">
             <div>
-                <p class="showcase-eyebrow">METROBLAZOR / COMPONENT GALLERY</p>
+                <MetroBreadcrumb Items="HeaderBreadcrumb" CurrentKey="@selectedControl" ItemClick="HeaderBreadcrumbClicked" />
                 <MetroText TextStyle="MetroTextStyle.Display">@CurrentTitle</MetroText>
                 <MetroText TextStyle="MetroTextStyle.Body" Class="showcase-lede">Windows 8.1 Metro controls for modern browsers, built touch-first and kept deliberately flat.</MetroText>
             </div>
@@ -62,7 +66,7 @@
                     <MetroTile Label="Files" SubLabel="Browse storage" Icon="□" AccentColor="#CA5010" Size="@MetroTileSize.Wide" Selected="true" OnClick="TileClicked" />
                     <MetroTile Label="Music" SubLabel="Playing now" Icon="♫" AccentColor="#C239B3" Size="@MetroTileSize.Large" OnClick="TileClicked" />
                 </div>
-                <p class="showcase-status" aria-live="polite">@tileStatus</p>
+                <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@tileStatus</MetroText>
             </section>
         }
         else if (selectedControl == "input")
@@ -70,7 +74,7 @@
             <DemoSection Kicker="FORM / METROINPUT" Title="Text input" Description="The classic Metro underline field with a clear focus transition.">
                 <div class="showcase-control-card showcase-single-demo">
                     <MetroInput Id="display-name" Label="Display name" Placeholder="Type a name" Value="@displayName" ValueChanged="OnNameChanged" />
-                    <p class="showcase-value">Value: @displayName</p>
+                    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-value">Value: @displayName</MetroText>
                 </div>
             </DemoSection>
         }
@@ -79,6 +83,19 @@
             <DemoSection Kicker="MOTION / METROPAGETRANSITION" Title="Page transition" Description="A reusable content transition for app navigation. Application routing remains outside the component library.">
                 <MetroPageTransition TransitionKey="@transitionKey"><MetroSurface><MetroText TextStyle="MetroTextStyle.Subheader">Transitioning surface</MetroText></MetroSurface></MetroPageTransition>
                 <MetroButton OnClick="ChangeTransition">Change content</MetroButton>
+            </DemoSection>
+        }
+        else if (selectedControl == "layout")
+        {
+            <DemoSection Kicker="LAYOUT / METROLAYOUT" Title="Layout" Description="MetroLayout is the responsive app shell used by this showcase: a persistent sidebar beside the main region on desktop, and an icon rail that pushes content off-screen when expanded on mobile. Combine it with MetroSplitView and MetroAppFrame inside the main region.">
+                <MetroSplitView>
+                    <PaneContent><MetroNavigation Items="layoutNavItems" SelectedKey="@selectedControl" /></PaneContent>
+                    <ChildContent><MetroText TextStyle="MetroTextStyle.Body">MetroSplitView: a pane plus content region for file managers and settings pages.</MetroText></ChildContent>
+                </MetroSplitView>
+                <MetroAppFrame>
+                    <Header><MetroText TextStyle="MetroTextStyle.Subheader">MetroAppFrame</MetroText></Header>
+                    <ChildContent><MetroSurface><MetroText TextStyle="MetroTextStyle.Body">MetroAppFrame: header plus content regions inside a page.</MetroText></MetroSurface></ChildContent>
+                </MetroAppFrame>
             </DemoSection>
         }
         else if (selectedControl == "frame")
@@ -94,7 +111,7 @@
         {
             <DemoSection Kicker="SURFACE / METROTILEGROUP" Title="Tile group" Description="A named group for organizing tiles on a Start surface.">
                 <MetroTileGroup Title="Pinned" Items="groupApps" ItemMoved="GroupItemMoved" ItemSizeChanged="GroupItemSizeChanged" />
-                <p class="showcase-status">Drag tiles to reorder them. Hover a tile and use ↗ to cycle Small, Medium, Wide, and Large. @groupStatus</p>
+                <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status">Drag tiles to reorder them. Hover a tile and use ↗ to cycle Small, Medium, Wide, and Large. @groupStatus</MetroText>
             </DemoSection>
         }
         else if (selectedControl == "semantic-zoom")
@@ -125,7 +142,7 @@
         {
             <DemoSection Kicker="COLLECTION / METROTREEVIEW" Title="Tree view" Description="Expandable hierarchical navigation for folders and settings categories.">
                 <MetroTreeView Nodes="treeNodes" SelectedKey="selectedTreeNode" NodeClick="TreeNodeClicked" />
-                <p class="showcase-status">@treeStatus</p>
+                <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status">@treeStatus</MetroText>
             </DemoSection>
         }
         else if (selectedControl == "split")
@@ -153,8 +170,8 @@
                             <small>Non-bordered</small>
                         </span>
                     </div>
-                    <p class="showcase-value">Icon buttons: bordered circular and non-bordered.</p>
-                    <p class="showcase-value" aria-live="polite">@saveStatus</p>
+                    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-value">Icon buttons: bordered circular and non-bordered.</MetroText>
+                    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-value" aria-live="polite">@saveStatus</MetroText>
                 </div>
             </DemoSection>
         }
@@ -220,14 +237,14 @@
         {
             <DemoSection Kicker="LAUNCHER / METROAPPGRID" Title="App grid" Description="A responsive launcher that keeps the same Metro tile language at every viewport.">
                 <MetroAppGrid Items="apps" Columns="4" ItemClick="AppClicked" />
-                <p class="showcase-status" aria-live="polite">@appStatus</p>
+                <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@appStatus</MetroText>
             </DemoSection>
         }
         else if (selectedControl == "sidebar")
         {
-            <DemoSection Kicker="NAVIGATION / METROSIDEBAR" Title="Sidebar" Description="A left-side component index with a selected rail, inspired by Fluent documentation and Windows 8 navigation.">
+            <DemoSection Kicker="NAVIGATION / METROLAYOUT" Title="Sidebar" Description="MetroLayout provides the app shell: a persistent sidebar rail on desktop, an overlay drawer with scrim on mobile. This preview shows the collapsed icon rail.">
                 <div class="showcase-control-card showcase-sidebar-preview">
-                    <MetroSidebar>
+                    <MetroSidebar Collapsed="true">
                         <MetroNavigation Items="navigationItems" SelectedKey="@selectedControl" />
                     </MetroSidebar>
                 </div>
@@ -282,7 +299,7 @@
         else if (selectedControl == "search")
         {
             <DemoSection Kicker="FORM / METROSEARCHBOX" Title="Search box" Description="Search input with icon affordance and clear action.">
-                <div class="showcase-control-card showcase-single-demo"><MetroSearchBox Placeholder="Search files" @bind-Value="searchValue" /><p class="showcase-value">Query: @searchValue</p></div>
+                <div class="showcase-control-card showcase-single-demo"><MetroSearchBox Placeholder="Search files" @bind-Value="searchValue" /><MetroText TextStyle="MetroTextStyle.Caption" class="showcase-value">Query: @searchValue</MetroText></div>
             </DemoSection>
         }
         else if (selectedControl == "list")
@@ -296,13 +313,13 @@
                         </div>
                     </ItemTemplate>
                 </MetroListView>
-                <p class="showcase-status">@listStatus</p>
+                <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status">@listStatus</MetroText>
             </DemoSection>
         }
         else if (selectedControl == "pivot")
         {
             <DemoSection Kicker="NAVIGATION / METROPIVOT" Title="Pivot" Description="Horizontal section navigation with an active underline and overflow scrolling.">
-                <MetroPivot Items="pivotItems" @bind-SelectedKey="pivotValue"><p>Current pivot: @pivotValue</p></MetroPivot>
+                <MetroPivot Items="pivotItems" @bind-SelectedKey="pivotValue"><MetroText TextStyle="MetroTextStyle.Body">Current pivot: @pivotValue</MetroText></MetroPivot>
             </DemoSection>
         }
         else if (selectedControl == "hub")
@@ -320,7 +337,7 @@
         else if (selectedControl == "command-bar")
         {
             <DemoSection Kicker="COMMANDS / METROCOMMANDBAR" Title="Command bar" Description="Flat command actions with optional icons and disabled states.">
-                <MetroCommandBar Items="commands" CommandClick="CommandClicked" /><p class="showcase-status">@commandStatus</p>
+                <MetroCommandBar Items="commands" CommandClick="CommandClicked" /><MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status">@commandStatus</MetroText>
             </DemoSection>
         }
         else if (selectedControl == "app-bar")
@@ -348,18 +365,19 @@
                     <HeaderTemplate><th>Name</th><th>Status</th><th>Size</th></HeaderTemplate>
                     <RowTemplate Context="row"><td>@row.Name</td><td>@row.Status</td><td>@row.Size</td></RowTemplate>
                 </MetroDataGrid>
-                <p class="showcase-status">@rowStatus</p>
+                <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status">@rowStatus</MetroText>
             </DemoSection>
         }
-</main>
-</div>
+    </div>
+    </ChildContent>
+</MetroLayout>
 </div>
 
 <MetroBlade Open="bladeOpen" Title="@CurrentTitle" OnClose="CloseBlade">
     <p class="showcase-kicker">WINDOWS 8 DETAIL SURFACE</p>
     <MetroText TextStyle="MetroTextStyle.Subheader">@CurrentTitle</MetroText>
     <MetroText TextStyle="MetroTextStyle.Body">@CurrentDescription</MetroText>
-    <p>This blade is reserved for a small notification or a simple toggle, not for routine component navigation.</p>
+    <MetroText TextStyle="MetroTextStyle.Body">This blade is reserved for a small notification or a simple toggle, not for routine component navigation.</MetroText>
     <MetroToggle Label="Enable notification" @bind-Checked="syncEnabled" />
 </MetroBlade>
 
@@ -369,12 +387,12 @@
 </MetroAppBar>
 
 <MetroFlyout Open="@flyoutOpen" Title="Quick actions" OnClose="CloseFlyout">
-    <p>Flyouts keep contextual actions close to the current surface.</p>
+    <MetroText TextStyle="MetroTextStyle.Body">Flyouts keep contextual actions close to the current surface.</MetroText>
     <MetroButton OnClick="CloseFlyout">Done</MetroButton>
 </MetroFlyout>
 
 <MetroContentDialog Open="@dialogOpen" Title="Confirm action" OnConfirm="CloseDialog" OnCancel="CloseDialog">
-    <p>This is a Metro content dialog with explicit actions and a centered surface.</p>
+    <MetroText TextStyle="MetroTextStyle.Body">This is a Metro content dialog with explicit actions and a centered surface.</MetroText>
 </MetroContentDialog>
 
 @code {
@@ -430,6 +448,7 @@
         new() { Key = "blade", Label = "Blade", Icon = "blade", Group = "Navigation" },
         new() { Key = "icon", Label = "Icon", Icon = "icon", Group = "Foundation" },
         new() { Key = "transition", Label = "Page transition", Icon = "transition", Group = "Foundation" },
+        new() { Key = "layout", Label = "Layout", Icon = "appbar", Group = "Layout" },
         new() { Key = "frame", Label = "App frame", Icon = "frame", Group = "Layout" },
         new() { Key = "select", Label = "Select", Icon = "select", Group = "Forms" },
         new() { Key = "radio", Label = "Radio", Icon = "radio", Group = "Forms" },
@@ -465,6 +484,13 @@
     private IEnumerable<IconRow> IconRows => MetroIconCatalog.Search(iconQuery, 96).Chunk(8).Select(names => new IconRow(names));
     private readonly IReadOnlyList<MetroBreadcrumbItem> breadcrumbs =
     [new() { Key = "home", Label = "Home" }, new() { Key = "documents", Label = "Documents" }, new() { Key = "reports", Label = "Reports" }];
+    private readonly IReadOnlyList<MetroNavigationItem> layoutNavItems =
+    [
+        new() { Key = "layout", Label = "Layout", Icon = "appbar", Group = "Layout" },
+        new() { Key = "frame", Label = "App frame", Icon = "frame", Group = "Layout" },
+        new() { Key = "split", Label = "Split view", Icon = "split", Group = "Layout" },
+        new() { Key = "hub", Label = "Hub", Icon = "hub", Group = "Layout" }
+    ];
     private readonly IReadOnlyList<MetroTreeNode> treeNodes =
     [
         new() { Key = "storage", Label = "Storage", Icon = "folder", Children = [new() { Key = "pictures", Label = "Pictures", Icon = "folder" }, new() { Key = "music", Label = "Music", Icon = "folder" }] },
@@ -492,6 +518,23 @@
     [new() { Label = "Settings", Icon = "settings", AccentColor = "#5C2D91", Size = MetroTileSize.Small }];
 
     private string CurrentTitle => navigationItems.FirstOrDefault(item => item.Key == selectedControl)?.Label ?? "Overview";
+
+    private IReadOnlyList<MetroBreadcrumbItem> HeaderBreadcrumb
+    {
+        get
+        {
+            var current = navigationItems.FirstOrDefault(item => item.Key == selectedControl);
+            return
+            [
+                new() { Key = "components", Label = "Components" },
+                new() { Key = "group", Label = current?.Group ?? "Getting started" },
+                new() { Key = selectedControl, Label = CurrentTitle }
+            ];
+        }
+    }
+
+    private Task HeaderBreadcrumbClicked(MetroBreadcrumbItem item)
+        => SelectControl(item.Key is "components" or "group" ? "overview" : item.Key);
     private string CurrentDescription => selectedControl switch
     {
         "tile" => "Metro tiles are square, colorful, and sized for touch.",

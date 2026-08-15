@@ -1,0 +1,30 @@
+@namespace MetroBlazor
+
+<div class="metro-layout">
+    @if (SidebarContent is not null)
+    {
+        <MetroSidebar Brand="@Brand" Collapsed="@SidebarCollapsed" CollapsedChanged="SidebarCollapsedChanged" BrandIcon="@BrandIcon">
+            @SidebarContent
+        </MetroSidebar>
+        <button type="button" class="metro-layout-scrim" aria-label="Close navigation" @onclick="CloseSidebar"></button>
+    }
+    <main class="metro-layout-main">
+        @if (HeaderTemplate is not null)
+        {
+            <header class="metro-layout-header">@HeaderTemplate</header>
+        }
+        @ChildContent
+    </main>
+</div>
+
+@code {
+    [Parameter] public string Brand { get; set; } = "METROBLAZOR";
+    [Parameter] public bool SidebarCollapsed { get; set; }
+    [Parameter] public EventCallback<bool> SidebarCollapsedChanged { get; set; }
+    [Parameter] public RenderFragment? SidebarContent { get; set; }
+    [Parameter] public RenderFragment? BrandIcon { get; set; }
+    [Parameter] public RenderFragment? HeaderTemplate { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+
+    private Task CloseSidebar() => SidebarCollapsedChanged.InvokeAsync(true);
+}

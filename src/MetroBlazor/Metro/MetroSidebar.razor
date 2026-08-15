@@ -7,6 +7,10 @@
         </button>
         @if (!Collapsed)
         {
+            @if (BrandIcon is not null)
+            {
+                <span class="metro-sidebar-brand-icon">@BrandIcon</span>
+            }
             <span class="metro-sidebar-heading">@Brand</span>
         }
     </div>
@@ -19,6 +23,7 @@
     [Parameter] public bool Collapsed { get; set; }
     [Parameter] public EventCallback<bool> CollapsedChanged { get; set; }
     [Parameter] public string Brand { get; set; } = "METROBLAZOR";
+    [Parameter] public RenderFragment? BrandIcon { get; set; }
     [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }

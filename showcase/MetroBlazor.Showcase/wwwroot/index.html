@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MetroBlazor Showcase</title>
     <base href="/" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="manifest" href="site.webmanifest" />
+    <meta name="theme-color" content="#1b1b1b" />
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="MetroBlazor.Showcase.styles.css" />
     <!-- Start Single Page Apps for GitHub Pages -->
@@ -35,11 +41,19 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="loading-shell">
+            <div class="loading-brand">
+                <img class="loading-logo" src="metroblazor-icon.svg" alt="" aria-hidden="true" />
+                <span class="loading-logo-text">MetroBlazor</span>
+            </div>
+            <div class="loading-progress-metro" role="progressbar" aria-label="Loading">
+                <span class="loading-progress-dot" style="--metro-loading-delay: 0ms;"></span>
+                <span class="loading-progress-dot" style="--metro-loading-delay: 90ms;"></span>
+                <span class="loading-progress-dot" style="--metro-loading-delay: 180ms;"></span>
+                <span class="loading-progress-dot" style="--metro-loading-delay: 270ms;"></span>
+                <span class="loading-progress-dot" style="--metro-loading-delay: 360ms;"></span>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">

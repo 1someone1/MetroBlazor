@@ -117,6 +117,35 @@ public class MetroControlTests
     }
 
     [Fact]
+    public void MetroLayout_renders_sidebar_brand_and_main_content()
+    {
+        using var ctx = new BunitContext();
+        var cut = ctx.Render<MetroLayout>(p => p
+            .Add(x => x.Brand, "TESTAPP")
+            .Add(x => x.SidebarContent, (RenderFragment)(b => b.AddContent(0, "NAV")))
+            .Add(x => x.ChildContent, (RenderFragment)(b => b.AddContent(0, "MAIN"))));
+
+        Assert.Contains("NAV", cut.Find(".metro-sidebar").TextContent);
+        Assert.Contains("MAIN", cut.Find(".metro-layout-main").TextContent);
+        Assert.Contains("TESTAPP", cut.Find(".metro-sidebar-heading").TextContent);
+    }
+
+    [Fact]
+    public void MetroLayout_scrim_requests_sidebar_collapse()
+    {
+        using var ctx = new BunitContext();
+        var collapsed = false;
+        var cut = ctx.Render<MetroLayout>(p => p
+            .Add(x => x.SidebarContent, (RenderFragment)(b => b.AddContent(0, "NAV")))
+            .Add(x => x.ChildContent, (RenderFragment)(b => b.AddContent(0, "MAIN")))
+            .Add(x => x.SidebarCollapsedChanged, EventCallback.Factory.Create<bool>(this, value => collapsed = value)));
+
+        cut.Find(".metro-layout-scrim").Click();
+
+        Assert.True(collapsed);
+    }
+
+    [Fact]
     public void MetroSidebar_only_owns_collapse_shell()
     {
         using var ctx = new BunitContext();
