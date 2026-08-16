@@ -7,7 +7,9 @@
         <tbody>
             @foreach (var item in Items)
             {
-                <tr @onclick="@(() => RowClick.InvokeAsync(item))">
+                <tr @onclick="@(() => RowClick.InvokeAsync(item))"
+                    @oncontextmenu="@(args => OnRowContextMenu(item, args))"
+                    @oncontextmenu:preventDefault="@RowContextMenu.HasDelegate">
                     @if (RowTemplate is not null)
                     {
                         @RowTemplate(item)
@@ -23,6 +25,11 @@
     [Parameter, EditorRequired] public RenderFragment? HeaderTemplate { get; set; }
     [Parameter, EditorRequired] public RenderFragment<TItem>? RowTemplate { get; set; }
     [Parameter] public EventCallback<TItem> RowClick { get; set; }
+    /// <summary>Raised when a row is right-clicked; carries the mouse position for context menus.</summary>
+    [Parameter] public EventCallback<(TItem Item, MouseEventArgs Args)> RowContextMenu { get; set; }
     [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Task OnRowContextMenu(TItem item, MouseEventArgs args) =>
+        RowContextMenu.HasDelegate ? RowContextMenu.InvokeAsync((item, args)) : Task.CompletedTask;
 }

@@ -107,4 +107,99 @@ public class MetroTileTests
 
         Assert.False(invoked);
     }
+
+    [Fact]
+    public void TileGroup_rows_mode_emits_two_base_tracks_per_visual_row()
+    {
+        using var ctx = new BunitContext();
+        var items = new List<MetroAppItem> { new() { Label = "a" } };
+        var cut = ctx.Render<MetroTileGroup>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.Rows, 2));
+
+        Assert.Contains("--metro-tile-group-tracks: 4", cut.Find(".metro-tile-group-grid").GetAttribute("style"));
+    }
+
+    [Fact]
+    public void TileGroup_drop_on_bottom_half_inserts_after_target()
+    {
+        using var ctx = new BunitContext();
+        var items = new List<MetroAppItem>
+        {
+            new() { Label = "a" }, new() { Label = "b" }, new() { Label = "c" }, new() { Label = "d" },
+        };
+        IReadOnlyList<MetroAppItem>? layout = null;
+        var cut = ctx.Render<MetroTileGroup>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.Rows, 2)
+            .Add(x => x.LayoutChanged, EventCallback.Factory.Create<IReadOnlyList<MetroAppItem>>(this, l => layout = l)));
+
+        cut.FindAll(".metro-tile-group-item")[1].TriggerEvent("ondragstart", new DragEventArgs());
+        // Medium tiles are 128px tall in Rows mode; past the 64px midpoint = insert after.
+        cut.FindAll(".metro-tile-group-item")[3].TriggerEvent("ondrop", new DragEventArgs { OffsetY = 100 });
+
+        Assert.Equal(new[] { "a", "c", "d", "b" }, layout!.Select(i => i.Label).ToArray());
+    }
+
+    [Fact]
+    public void TileGroup_drop_on_top_half_inserts_before_target()
+    {
+        using var ctx = new BunitContext();
+        var items = new List<MetroAppItem>
+        {
+            new() { Label = "a" }, new() { Label = "b" }, new() { Label = "c" }, new() { Label = "d" },
+        };
+        IReadOnlyList<MetroAppItem>? layout = null;
+        var cut = ctx.Render<MetroTileGroup>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.Rows, 2)
+            .Add(x => x.LayoutChanged, EventCallback.Factory.Create<IReadOnlyList<MetroAppItem>>(this, l => layout = l)));
+
+        cut.FindAll(".metro-tile-group-item")[1].TriggerEvent("ondragstart", new DragEventArgs());
+        cut.FindAll(".metro-tile-group-item")[3].TriggerEvent("ondrop", new DragEventArgs { OffsetY = 10 });
+
+        Assert.Equal(new[] { "a", "c", "b", "d" }, layout!.Select(i => i.Label).ToArray());
+    }
+
+    [Fact]
+    public void TileGroup_drop_past_the_last_tile_appends_to_end()
+    {
+        using var ctx = new BunitContext();
+        var items = new List<MetroAppItem>
+        {
+            new() { Label = "a" }, new() { Label = "b" }, new() { Label = "c" }, new() { Label = "d" },
+        };
+        IReadOnlyList<MetroAppItem>? layout = null;
+        var cut = ctx.Render<MetroTileGroup>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.Rows, 2)
+            .Add(x => x.LayoutChanged, EventCallback.Factory.Create<IReadOnlyList<MetroAppItem>>(this, l => layout = l)));
+
+        cut.FindAll(".metro-tile-group-item")[1].TriggerEvent("ondragstart", new DragEventArgs());
+        // Empty area to the right of the last column (OffsetX ~ 3.7 cells of 136px).
+        cut.Find(".metro-tile-group-grid").TriggerEvent("ondrop", new DragEventArgs { OffsetX = 500, OffsetY = 10 });
+
+        Assert.Equal(new[] { "a", "c", "d", "b" }, layout!.Select(i => i.Label).ToArray());
+    }
+
+    [Fact]
+    public void TileGroup_drop_in_a_gap_inserts_at_the_matching_slot()
+    {
+        using var ctx = new BunitContext();
+        var items = new List<MetroAppItem>
+        {
+            new() { Label = "a" }, new() { Label = "b" }, new() { Label = "c" }, new() { Label = "d" },
+        };
+        IReadOnlyList<MetroAppItem>? layout = null;
+        var cut = ctx.Render<MetroTileGroup>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.Rows, 2)
+            .Add(x => x.LayoutChanged, EventCallback.Factory.Create<IReadOnlyList<MetroAppItem>>(this, l => layout = l)));
+
+        cut.FindAll(".metro-tile-group-item")[3].TriggerEvent("ondragstart", new DragEventArgs());
+        // Gap right below the first tile: column 0, row 0 + 1 = slot 1.
+        cut.Find(".metro-tile-group-grid").TriggerEvent("ondrop", new DragEventArgs { OffsetX = 80, OffsetY = 10 });
+
+        Assert.Equal(new[] { "a", "d", "b", "c" }, layout!.Select(i => i.Label).ToArray());
+    }
 }

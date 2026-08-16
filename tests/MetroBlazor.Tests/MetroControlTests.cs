@@ -411,7 +411,8 @@ public class MetroControlTests
         Assert.Equal("true", cut.Find(".metro-tile-group-item .metro-tile").GetAttribute("draggable"));
 
         cut.FindAll(".metro-tile-group-item .metro-tile")[0].TriggerEvent("ondragstart", new DragEventArgs());
-        cut.FindAll(".metro-tile-group-item")[2].TriggerEvent("ondrop", new DragEventArgs());
+        // Small tiles are 60px wide; dropping past the 30px midpoint inserts after the target.
+        cut.FindAll(".metro-tile-group-item")[2].TriggerEvent("ondrop", new DragEventArgs { OffsetX = 40 });
 
         Assert.Same(first, moved);
         var labels = cut.FindAll(".metro-tile-group-item .metro-tile .metro-tile-label").Select(e => e.TextContent).ToArray();
@@ -584,4 +585,22 @@ public class MetroControlTests
         var plain = ctx.Render<MetroTile>(p => p.Add(x => x.Label, "Mail"));
         Assert.Empty(plain.FindAll(".metro-tile-front-content"));
     }
+
+    [Fact]
+    public void MetroDataGrid_row_context_menu_carries_item_and_position()
+    {
+        using var ctx = new BunitContext();
+        (string Item, double X, double Y)? received = null;
+        var cut = ctx.Render<MetroDataGrid<string>>(p => p
+            .Add(x => x.Items, new[] { "one", "two" })
+            .Add(x => x.HeaderTemplate, (RenderFragment)(b => b.AddContent(0, "h")))
+            .Add(x => x.RowTemplate, (RenderFragment<string>)(item => b => b.AddContent(0, item)))
+            .Add(x => x.RowContextMenu, EventCallback.Factory.Create<(string, MouseEventArgs)>(this,
+                e => received = (e.Item1, e.Item2.ClientX, e.Item2.ClientY))));
+
+        cut.FindAll("tbody tr")[1].ContextMenu(new MouseEventArgs { ClientX = 40, ClientY = 55 });
+
+        Assert.Equal(("two", 40d, 55d), received);
+    }
+
 }

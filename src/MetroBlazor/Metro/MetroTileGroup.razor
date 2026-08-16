@@ -10,7 +10,7 @@
     {
         @if (ReadOnly)
         {
-            <div class="metro-tile-group-grid @(Columns > 0 ? "columns" : null)" style="@GridStyle">
+            <div class="metro-tile-group-grid @(Columns > 0 ? "columns" : null) @(Rows > 0 ? "rows" : null)" style="@GridStyle">
                 @foreach (var item in orderedItems)
                 {
                     <MetroTile Label="@item.Label"
@@ -18,18 +18,21 @@
                                Icon="@item.Icon"
                                AccentColor="@item.AccentColor"
                                Size="@item.Size"
+                               Class="@TileSizeClass(item)"
                                OnClick="@((MouseEventArgs _) => SelectItem(item))" />
                 }
             </div>
         }
         else
         {
-            <div class="metro-tile-group-grid metro-tile-group-sortable @(Columns > 0 ? "columns" : null)" style="@GridStyle">
+            <div class="metro-tile-group-grid metro-tile-group-sortable @(Columns > 0 ? "columns" : null) @(Rows > 0 ? "rows" : null)" style="@GridStyle"
+                 @ondragover:preventDefault="true"
+                 @ondrop="@((DragEventArgs e) => DropInGrid(e))">
                 @for (var index = 0; index < orderedItems.Count; index++)
                 {
                     var tileIndex = index;
                     var item = orderedItems[tileIndex];
-                    <div class="metro-tile-group-item @(editMode ? "editing" : null) @(draggingIndex == tileIndex ? "dragging" : null)"
+                    <div class="metro-tile-group-item @TileSizeClass(item) @(editMode ? "editing" : null) @(draggingIndex == tileIndex ? "dragging" : null)"
                          draggable="false"
                          @onpointerdown="@((PointerEventArgs _) => BeginLongPress(tileIndex))"
                          @onpointerup="CancelLongPress"
@@ -42,13 +45,15 @@
                          @ondragend="EndDrag"
                          @ondragover:preventDefault="true"
                          @ondragenter:preventDefault="true"
-                         @ondrop="@((DragEventArgs _) => Drop(tileIndex))">
+                         @ondrop="@((DragEventArgs e) => Drop(tileIndex, e))"
+                         @ondrop:stopPropagation="true">
                         <MetroTile Label="@item.Label"
                                    SubLabel="@item.SubLabel"
                                    Icon="@item.Icon"
                                    AccentColor="@item.AccentColor"
                                    Size="@item.Size"
                                    Draggable="true"
+                                   OnClick="@((MouseEventArgs _) => ClickItem(tileIndex))"
                                    OnDragStart="@((DragEventArgs _) => BeginDrag(tileIndex))"
                                    OnDragEnd="EndDrag" />
                         @if (editMode)
@@ -80,9 +85,17 @@
     /// flexible wrap layout.</summary>
     [Parameter] public int Columns { get; set; }
 
+    /// <summary>Fixed row count for a Start-screen layout: tiles fill top-to-bottom and
+    /// flow into new columns (Win8 style multi-row groups). 0 (default) disables.</summary>
+    [Parameter] public int Rows { get; set; }
+
     [Parameter] public EventCallback<MetroAppItem> ItemMoved { get; set; }
     [Parameter] public EventCallback<MetroAppItem> ItemSizeChanged { get; set; }
     [Parameter] public EventCallback<MetroAppItem> ItemRemoved { get; set; }
+
+    /// <summary>Raised after any reorder/resize/remove with the full current tile order,
+    /// so hosts can persist the layout.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<MetroAppItem>> LayoutChanged { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
@@ -94,7 +107,29 @@
     private bool editMode;
     private CancellationTokenSource? longPressCancellation;
 
-    private string? GridStyle => Columns > 0 ? $"--metro-tile-group-columns: {Columns};" : null;
+    private string? GridStyle
+    {
+        get
+        {
+            var style = "";
+            if (Columns > 0)
+            {
+                style += $"--metro-tile-group-columns: {Columns};";
+            }
+            if (Rows > 0)
+            {
+                // The CSS grid uses a 60px base track (quarter tile), so each
+                // visual row needs two tracks.
+                style += $"--metro-tile-group-tracks: {Rows * 2};";
+            }
+            return style.Length > 0 ? style : null;
+        }
+    }
+
+    private static string TileSizeClass(MetroAppItem item) =>
+        $"tile-size-{item.Size.ToString().ToLowerInvariant()}";
+
+    private Task NotifyLayoutChanged() => LayoutChanged.InvokeAsync(orderedItems.ToList());
 
     protected override void OnParametersSet()
     {
@@ -111,6 +146,17 @@
         {
             await ItemClick.InvokeAsync(item);
         }
+    }
+
+    /// <summary>Click-to-open in sortable mode: ignored while editing or dragging.</summary>
+    private async Task ClickItem(int index)
+    {
+        if (editMode || draggingIndex >= 0 || index < 0 || index >= orderedItems.Count)
+        {
+            return;
+        }
+
+        await SelectItem(orderedItems[index]);
     }
 
     private void BeginLongPress(int index)
@@ -168,9 +214,69 @@
 
     private Task EndDrag(DragEventArgs _) { draggingIndex = -1; return Task.CompletedTask; }
 
-    private async Task Drop(int targetIndex)
+    /// <summary>
+    /// Drops onto a tile: the pointer half decides insert-before vs insert-after
+    /// (top/bottom halves in Rows mode where tiles flow down columns, left/right
+    /// halves in the default horizontal wrap), so a tile can be moved across both
+    /// rows and columns — e.g. onto the bottom half of the last row-1 tile to
+    /// land after it.
+    /// </summary>
+    private Task Drop(int targetIndex, DragEventArgs args)
     {
-        if (draggingIndex < 0 || draggingIndex >= orderedItems.Count || draggingIndex == targetIndex)
+        if (draggingIndex < 0 || draggingIndex >= orderedItems.Count)
+        {
+            draggingIndex = -1;
+            return Task.CompletedTask;
+        }
+
+        var insertAfter = args.OffsetY > TileHeight(orderedItems[targetIndex]) / 2;
+        if (Rows <= 0)
+        {
+            insertAfter = args.OffsetX > TileWidth(orderedItems[targetIndex]) / 2;
+        }
+
+        return MoveDraggedTo(targetIndex + (insertAfter ? 1 : 0));
+    }
+
+    /// <summary>
+    /// Drop on the gaps between tiles or the empty area around them (these belong
+    /// to the grid container, not to any tile). Estimates the insertion slot from
+    /// the pointer position in 136px visual cells (128px tile + 8px gap); dropping
+    /// past the last tile appends to the end.
+    /// </summary>
+    private Task DropInGrid(DragEventArgs args)
+    {
+        if (draggingIndex < 0 || draggingIndex >= orderedItems.Count)
+        {
+            draggingIndex = -1;
+            return Task.CompletedTask;
+        }
+
+        const int cell = 136;
+        int insertIndex;
+        if (Rows > 0)
+        {
+            // Column flow: each column holds Rows visual cells before the next one.
+            var col = Math.Max(0, (int)(args.OffsetX / cell));
+            var row = Math.Clamp((int)(args.OffsetY / cell), 0, Rows - 1);
+            insertIndex = Math.Min(col * Rows + row + 1, orderedItems.Count);
+        }
+        else
+        {
+            insertIndex = Math.Min((int)Math.Round(args.OffsetX / (double)cell), orderedItems.Count);
+        }
+
+        return MoveDraggedTo(insertIndex);
+    }
+
+    private async Task MoveDraggedTo(int insertIndex)
+    {
+        if (insertIndex > draggingIndex)
+        {
+            insertIndex--; // removal shifts everything above the dragged slot down by one
+        }
+
+        if (insertIndex == draggingIndex)
         {
             draggingIndex = -1;
             return;
@@ -178,10 +284,26 @@
 
         var item = orderedItems[draggingIndex];
         orderedItems.RemoveAt(draggingIndex);
-        orderedItems.Insert(Math.Min(targetIndex, orderedItems.Count), item);
+        orderedItems.Insert(Math.Min(insertIndex, orderedItems.Count), item);
         draggingIndex = -1;
         await ItemMoved.InvokeAsync(item);
+        await NotifyLayoutChanged();
     }
+
+    // Rendered tile dimensions (px) matching metro.css; only the midpoint matters.
+    private static double TileWidth(MetroAppItem item) => item.Size switch
+    {
+        MetroTileSize.Small => 60,
+        MetroTileSize.Medium => 128,
+        _ => 264,
+    };
+
+    private static double TileHeight(MetroAppItem item) => item.Size switch
+    {
+        MetroTileSize.Small => 60,
+        MetroTileSize.Large => 264,
+        _ => 128,
+    };
 
     private async Task CycleSize(MetroAppItem item)
     {
@@ -193,12 +315,14 @@
             _ => MetroTileSize.Small
         };
         await ItemSizeChanged.InvokeAsync(item);
+        await NotifyLayoutChanged();
     }
 
     private async Task RemoveItem(MetroAppItem item)
     {
         orderedItems.Remove(item);
         await ItemRemoved.InvokeAsync(item);
+        await NotifyLayoutChanged();
     }
 
     public void Dispose()
