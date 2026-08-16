@@ -1,0 +1,74 @@
+@page "/components/dialog"
+
+<PageTitle>Content dialog — MetroBlazor</PageTitle>
+
+<DemoSection Title="Confirm action" Description="A centered modal surface with explicit primary and secondary actions."
+             Code="@DialogCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroButton OnClick="OpenDialog">Open content dialog</MetroButton>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@dialogStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+<MetroContentDialog Open="dialogOpen" Title="Confirm action" OnConfirm="ConfirmDialog" OnCancel="CancelDialog">
+    <MetroText TextStyle="MetroTextStyle.Body">This is a Metro content dialog with explicit actions and a centered surface.</MetroText>
+</MetroContentDialog>
+
+@code {
+    private const string DialogCode = @"<MetroButton OnClick=""OpenDialog"">Open content dialog</MetroButton>
+
+<MetroContentDialog Open=""dialogOpen"" Title=""Confirm action"" OnConfirm=""ConfirmDialog"" OnCancel=""CancelDialog"">
+    <MetroText TextStyle=""MetroTextStyle.Body"">This is a Metro content dialog with explicit actions and a centered surface.</MetroText>
+</MetroContentDialog>
+
+@code {
+    private bool dialogOpen;
+
+    private void OpenDialog() => dialogOpen = true;
+    private void ConfirmDialog() => dialogOpen = false;
+    private void CancelDialog() => dialogOpen = false;
+}";
+
+    private bool dialogOpen;
+    private string dialogStatus = "No action taken.";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Open", "bool", "Controls whether the dialog is visible."),
+        new("Title", "string", "Header text, also used as the accessible label."),
+        new("ConfirmText", "string", "Primary action label. Defaults to \"OK\"."),
+        new("CancelText", "string?", "Secondary action label. Defaults to \"Cancel\"; empty hides it."),
+        new("ChildContent", "RenderFragment", "Dialog body content. (required)"),
+        new("OnConfirm", "EventCallback", "Raised by the primary action."),
+        new("OnCancel", "EventCallback", "Raised by the secondary action.")
+    ];
+
+    private Task OpenDialog(MouseEventArgs _)
+    {
+        dialogOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private Task ConfirmDialog()
+    {
+        dialogOpen = false;
+        dialogStatus = "Confirmed.";
+        return Task.CompletedTask;
+    }
+
+    private Task CancelDialog()
+    {
+        dialogOpen = false;
+        dialogStatus = "Cancelled.";
+        return Task.CompletedTask;
+    }
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

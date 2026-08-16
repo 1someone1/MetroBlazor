@@ -1,0 +1,53 @@
+@namespace MetroBlazor.Showcase.Components
+
+<MetroButton Icon="settings" IconOnly Bordered AriaLabel="Personalize" OnClick="Open" />
+
+<MetroBlade Open="@open" Title="Personalize" OnClose="Close">
+    <MetroText TextStyle="MetroTextStyle.Subheader">Theme</MetroText>
+    <MetroText TextStyle="MetroTextStyle.Body">
+        Pick a theme, Windows 8.1 style — background color plus accent.
+    </MetroText>
+    <div class="theme-swatch-grid" role="radiogroup" aria-label="Theme variants">
+        @foreach (var variant in Variants)
+        {
+            <button type="button"
+                    class="theme-swatch @(Current == variant.Variant ? "selected" : null)"
+                    role="radio"
+                    aria-checked="@(Current == variant.Variant ? "true" : "false")"
+                    @onclick="() => Select(variant.Variant)">
+                <span class="theme-swatch-color" style="background: @variant.Background;">
+                    <span class="theme-swatch-accent" style="background: @variant.Accent;"></span>
+                </span>
+                <span class="theme-swatch-name">@variant.Variant</span>
+            </button>
+        }
+    </div>
+</MetroBlade>
+
+@code {
+    [CascadingParameter] private MetroThemeState? ThemeState { get; set; }
+
+    private bool open;
+
+    private MetroThemeVariant Current => ThemeState?.Variant ?? MetroThemeVariant.Dark;
+
+    private static readonly IReadOnlyList<(MetroThemeVariant Variant, string Background, string Accent)> Variants =
+    [
+        (MetroThemeVariant.Dark, "#1b1b1b", "#0078d7"),
+        (MetroThemeVariant.Light, "#ffffff", "#0078d7"),
+        (MetroThemeVariant.Blue, "#003b6f", "#00a4ef"),
+        (MetroThemeVariant.Purple, "#32145f", "#b146c2"),
+    ];
+
+    private void Open(MouseEventArgs _) => open = true;
+    private void Close() => open = false;
+
+    private void Select(MetroThemeVariant variant)
+    {
+        if (ThemeState is not null)
+        {
+            ThemeState.Variant = variant;
+        }
+        open = false;
+    }
+}

@@ -1,0 +1,47 @@
+@page "/components/icon"
+
+<PageTitle>Icon — MetroBlazor</PageTitle>
+
+<DemoSection Title="Sizes" Description="Icons render as inline SVG with currentColor, so they pick up the surrounding text color. Three sizes share the same name-based API."
+             Code="@SizesCode">
+    <div class="showcase-inline-controls">
+        <MetroIcon Name="settings" Size="MetroIconSize.Small" />
+        <MetroIcon Name="settings" Size="MetroIconSize.Medium" />
+        <MetroIcon Name="settings" Size="MetroIconSize.Large" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status">Small, Medium (default), and Large — all resolved from the name "settings".</MetroText>
+</DemoSection>
+
+<DemoSection Title="Custom paths and labels" Description="PathOverride bypasses the catalog for one-off artwork. AriaLabel exposes the icon to assistive technology; without it the icon is aria-hidden. Unknown names fall back to the question icon."
+             Code="@CustomCode">
+    <div class="showcase-inline-controls">
+        <MetroIcon Name="brand" PathOverride="M3 3h18v18H3z" AriaLabel="MetroBlazor logo" Size="MetroIconSize.Large" />
+        <MetroIcon Name="does-not-exist" Size="MetroIconSize.Large" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status">Left: a PathOverride square with an aria-label. Right: the fallback for an unknown name. Browse every catalog name on the Icons page.</MetroText>
+    <MetroText TextStyle="MetroTextStyle.Link" Href="/icons">Open the icon catalog</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string SizesCode = @"<MetroIcon Name=""settings"" Size=""MetroIconSize.Small"" />
+<MetroIcon Name=""settings"" Size=""MetroIconSize.Medium"" />
+<MetroIcon Name=""settings"" Size=""MetroIconSize.Large"" />";
+
+    private const string CustomCode = @"<MetroIcon Name=""brand"" PathOverride=""M3 3h18v18H3z"" AriaLabel=""MetroBlazor logo"" />";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Name", "string", "Catalog name, case-insensitive; unknown names fall back to the question icon. (required)"),
+        new("Size", "MetroIconSize", "Small, Medium (default), or Large."),
+        new("PathOverride", "string?", "Custom SVG path data used instead of the catalog lookup."),
+        new("AriaLabel", "string?", "Accessible label; the icon is aria-hidden when omitted."),
+    ];
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

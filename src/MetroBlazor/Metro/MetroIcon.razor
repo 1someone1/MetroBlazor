@@ -1,16 +1,26 @@
 @namespace MetroBlazor
 
 <span class="metro-icon metro-icon-@Size.ToString().ToLowerInvariant()" role="img" aria-label="@AriaLabel" aria-hidden="@(string.IsNullOrWhiteSpace(AriaLabel) ? "true" : null)">
-    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-        <path d="@Path" fill="currentColor"></path>
-    </svg>
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="@Path" fill="currentColor"></path>
+        </svg>
+    }
 </span>
 
 @code {
-    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+    [Parameter] public string Name { get; set; } = string.Empty;
     [Parameter] public string? PathOverride { get; set; }
     [Parameter] public string? AriaLabel { get; set; }
     [Parameter] public MetroIconSize Size { get; set; } = MetroIconSize.Medium;
+    [Parameter] public MetroIconVariant Variant { get; set; } = MetroIconVariant.Filled;
+    /// <summary>Custom icon content (typically an inline svg) projected in place of the built-in glyph.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private string Path => PathOverride ?? MetroIconCatalog.ResolvePath(Name) ?? MetroIconCatalog.ResolvePath("question")!;
+    private string Path => PathOverride ?? MetroIconCatalog.ResolvePath(Name, Variant) ?? MetroIconCatalog.ResolvePath("question")!;
 }

@@ -1,0 +1,37 @@
+@page "/components/tooltip"
+
+<PageTitle>Tooltip — MetroBlazor</PageTitle>
+
+<DemoSection Title="Placements" Description="A hover and focus hint that stays attached to its trigger. Hover or focus each button."
+             Code="@PlacementsCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <div class="showcase-inline-controls">
+            <MetroTooltip Text="Pin to Start" Placement="top"><MetroButton>Top</MetroButton></MetroTooltip>
+            <MetroTooltip Text="Refresh the library" Placement="bottom"><MetroButton>Bottom</MetroButton></MetroTooltip>
+            <MetroTooltip Text="Previous item" Placement="left"><MetroButton>Left</MetroButton></MetroTooltip>
+            <MetroTooltip Text="Next item" Placement="right"><MetroButton>Right</MetroButton></MetroTooltip>
+        </div>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string PlacementsCode = @"<MetroTooltip Text=""Pin to Start"" Placement=""top"">
+    <MetroButton>Pin</MetroButton>
+</MetroTooltip>";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Text", "string?", "Hint content. No tooltip renders when null or empty."),
+        new("Placement", "string", "Where the hint appears: top, bottom, left, or right. Defaults to \"top\"."),
+        new("ChildContent", "RenderFragment", "The trigger element the tooltip attaches to. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

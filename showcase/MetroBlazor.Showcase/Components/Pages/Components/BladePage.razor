@@ -1,0 +1,60 @@
+@page "/components/blade"
+
+<PageTitle>Blade — MetroBlazor</PageTitle>
+
+<DemoSection Title="Detail surface" Description="The blade slides in from the right edge over a scrim. Clicking the scrim or the close button raises OnClose."
+             Code="@BladeCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroButton OnClick="OpenBlade">Open detail blade</MetroButton>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<MetroBlade Open="bladeOpen" Title="Photos" OnClose="CloseBlade">
+    <MetroText TextStyle="MetroTextStyle.Subheader">Photos</MetroText>
+    <MetroText TextStyle="MetroTextStyle.Body">A blade hosts details or a small action for the current selection, without leaving the page.</MetroText>
+    <MetroToggle Label="Enable notifications" @bind-Checked="notificationsEnabled" />
+</MetroBlade>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string BladeCode = @"<MetroButton OnClick=""OpenBlade"">Open detail blade</MetroButton>
+
+<MetroBlade Open=""bladeOpen"" Title=""Photos"" OnClose=""CloseBlade"">
+    <MetroText TextStyle=""MetroTextStyle.Body"">Details for the selected item.</MetroText>
+</MetroBlade>";
+
+    private bool bladeOpen;
+    private bool notificationsEnabled = true;
+    private string status = "Blade is closed.";
+
+    private Task OpenBlade(MouseEventArgs _)
+    {
+        bladeOpen = true;
+        status = "Blade is open.";
+        return Task.CompletedTask;
+    }
+
+    private Task CloseBlade()
+    {
+        bladeOpen = false;
+        status = "Blade is closed.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Open", "bool", "Whether the blade layer is rendered."),
+        new("Title", "string", "Heading shown in the blade header."),
+        new("ChildContent", "RenderFragment", "Blade body content. (required)"),
+        new("OnClose", "EventCallback", "Raised by the scrim and the close button."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

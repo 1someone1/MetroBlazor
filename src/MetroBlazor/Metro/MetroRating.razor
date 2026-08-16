@@ -1,0 +1,69 @@
+@namespace MetroBlazor
+
+<div class="metro-rating @(Disabled ? "disabled" : null) @Class" role="slider"
+     aria-label="@AriaLabel" aria-valuemin="0" aria-valuemax="@Max" aria-valuenow="@Value"
+     tabindex="@(Disabled ? null : "0")"
+     @attributes="AdditionalAttributes" @onkeydown="OnKeyDown" @onmouseleave="ClearTentative">
+    @for (var i = 1; i <= Max; i++)
+    {
+        var index = i;
+        <button type="button" class="metro-rating-star @StarClass(index)"
+                disabled="@Disabled" aria-label="@($"{index} of {Max}")"
+                tabindex="-1" @onclick="() => SetValue(index)" @onmouseenter="() => SetTentative(index)">
+            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6L12 2Z" />
+            </svg>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public int Max { get; set; } = 5;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Rating";
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private int tentative;
+
+    // WinJS Rating behavior: hovering previews the tentative value with filled
+    // stars in a medium tone; the committed value is filled in full-strength text
+    // color; unrated stars are dim outlines.
+    private string? StarClass(int index)
+    {
+        if (tentative > 0)
+        {
+            return index <= tentative ? "tentative" : null;
+        }
+        return index <= Value ? "filled" : null;
+    }
+
+    private void SetTentative(int index)
+    {
+        if (!Disabled)
+        {
+            tentative = index;
+        }
+    }
+
+    private void ClearTentative() => tentative = 0;
+
+    private Task SetValue(int value) => Update(value == Value ? 0 : value);
+
+    private Task OnKeyDown(KeyboardEventArgs args) => args.Key switch
+    {
+        "ArrowRight" or "ArrowUp" => Update(Math.Min(Value + 1, Max)),
+        "ArrowLeft" or "ArrowDown" => Update(Math.Max(Value - 1, 0)),
+        _ => Task.CompletedTask,
+    };
+
+    private async Task Update(int value)
+    {
+        if (!Disabled && ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(value);
+        }
+    }
+}

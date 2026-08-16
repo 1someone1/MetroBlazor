@@ -1,0 +1,51 @@
+@page "/components/hub"
+
+<PageTitle>Hub — MetroBlazor</PageTitle>
+
+<DemoSection Title="Grouped content" Description="A spacious content surface for grouped Metro sections, with an eyebrow label and a large title."
+             Code="@HubCode">
+    <MetroHub Eyebrow="HOME" Title="Your files">
+        <MetroTileGroup Items="apps" ReadOnly="true" Columns="3" ItemClick="AppClicked" />
+    </MetroHub>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@hubStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string HubCode = @"<MetroHub Eyebrow=""HOME"" Title=""Your files"">
+    <MetroTileGroup Items=""apps"" ReadOnly=""true"" Columns=""3"" ItemClick=""AppClicked"" />
+</MetroHub>";
+
+    private readonly IList<MetroAppItem> apps =
+    [
+        new() { Label = "Mail", SubLabel = "3 unread", Icon = "mail", AccentColor = "#0078D7" },
+        new() { Label = "Calendar", SubLabel = "Today", Icon = "calendar", AccentColor = "#107C10" },
+        new() { Label = "People", SubLabel = "Contacts", Icon = "people", AccentColor = "#E81123" },
+        new() { Label = "Settings", SubLabel = "System", Icon = "settings", AccentColor = "#5C2D91" },
+        new() { Label = "Photos", SubLabel = "Library", Icon = "image", AccentColor = "#008272" },
+        new() { Label = "Maps", SubLabel = "Explore", Icon = "location", AccentColor = "#CA5010" }
+    ];
+
+    private string hubStatus = "The hub composes any content — here a read-only tile group.";
+
+    private Task AppClicked(MetroAppItem item)
+    {
+        hubStatus = $"{item.Label} activated inside the hub.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Eyebrow", "string?", "Small uppercase label shown above the title."),
+        new("Title", "string?", "Hub heading. When empty, the header is omitted."),
+        new("ChildContent", "RenderFragment", "Hub body content — grids, text, or other sections. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

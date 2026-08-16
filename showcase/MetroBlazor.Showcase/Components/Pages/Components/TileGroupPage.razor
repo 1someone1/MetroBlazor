@@ -1,0 +1,96 @@
+@page "/components/tile-group"
+
+<PageTitle>Tile group — MetroBlazor</PageTitle>
+
+<DemoSection Title="Editable group" Description="A named group for organizing tiles on a Start surface, with drag sorting, removal, and size cycling."
+             Code="@GroupCode">
+    <MetroTileGroup Title="Pinned" Items="groupApps" ItemMoved="GroupItemMoved" ItemSizeChanged="GroupItemSizeChanged" ItemRemoved="GroupItemRemoved" />
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Drag tiles directly to reorder, like the Windows 8.1 Start screen. Right-click or long-press a tile for edit mode: ↗ cycles Small, Medium, Wide, and Large, × removes. @groupStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Read-only launcher" Description="Set ReadOnly to turn the group into a clickable launcher grid — no edit mode, no drag. Columns switches to a fixed-column layout. This replaces the former MetroAppGrid component."
+             Code="@LauncherCode">
+    <MetroTileGroup Items="apps" ReadOnly="true" Columns="4" ItemClick="AppClicked" />
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@appStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string GroupCode = @"<MetroTileGroup Title=""Pinned"" Items=""groupApps""
+                 ItemMoved=""GroupItemMoved"" ItemSizeChanged=""GroupItemSizeChanged"" ItemRemoved=""GroupItemRemoved"" />
+
+@code {
+    private readonly IList<MetroAppItem> groupApps =
+    [
+        new() { Label = ""Photos"", Icon = ""image"", AccentColor = ""#0078D7"", Size = MetroTileSize.Medium },
+    ];
+}";
+
+    private readonly IList<MetroAppItem> groupApps =
+    [
+        new() { Label = "Photos", Icon = "image", AccentColor = "#0078D7", Size = MetroTileSize.Medium },
+        new() { Label = "Files", Icon = "folder", AccentColor = "#CA5010", Size = MetroTileSize.Medium },
+        new() { Label = "Music", Icon = "music", AccentColor = "#C239B3", Size = MetroTileSize.Small }
+    ];
+
+    private string groupStatus = string.Empty;
+
+    private const string LauncherCode = @"<MetroTileGroup Items=""apps"" ReadOnly=""true"" Columns=""4"" ItemClick=""AppClicked"" />";
+
+    private readonly IList<MetroAppItem> apps =
+    [
+        new() { Label = "Mail", SubLabel = "3 unread", Icon = "mail", AccentColor = "#0078D7" },
+        new() { Label = "Calendar", SubLabel = "Today", Icon = "calendar", AccentColor = "#107C10" },
+        new() { Label = "People", SubLabel = "Contacts", Icon = "people", AccentColor = "#E81123" },
+        new() { Label = "Settings", SubLabel = "System", Icon = "settings", AccentColor = "#5C2D91" },
+        new() { Label = "Photos", SubLabel = "Library", Icon = "image", AccentColor = "#008272" },
+        new() { Label = "Maps", SubLabel = "Explore", Icon = "location", AccentColor = "#CA5010" }
+    ];
+
+    private string appStatus = "Select an app tile.";
+
+    private Task AppClicked(MetroAppItem item)
+    {
+        appStatus = $"{item.Label} activated.";
+        return Task.CompletedTask;
+    }
+
+    private Task GroupItemMoved(MetroAppItem item)
+    {
+        groupStatus = $"Moved {item.Label}.";
+        return Task.CompletedTask;
+    }
+
+    private Task GroupItemSizeChanged(MetroAppItem item)
+    {
+        groupStatus = $"{item.Label} is now {item.Size}.";
+        return Task.CompletedTask;
+    }
+
+    private Task GroupItemRemoved(MetroAppItem item)
+    {
+        groupStatus = $"Removed {item.Label}.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Title", "string?", "Group header shown above the tiles."),
+        new("Items", "IList<MetroAppItem>?", "Tiles rendered from data. When null, ChildContent is used instead."),
+        new("ReadOnly", "bool", "Launcher mode: no edit mode or drag; tiles are clickable. Replaces MetroAppGrid."),
+        new("ItemClick", "EventCallback<MetroAppItem>", "Raised when a tile is activated in read-only mode."),
+        new("Columns", "int", "Fixed column count for a launcher grid layout; 0 (default) keeps the flexible wrap layout."),
+        new("ItemMoved", "EventCallback<MetroAppItem>", "Raised after a tile is dragged to a new position."),
+        new("ItemSizeChanged", "EventCallback<MetroAppItem>", "Raised after the ↗ control cycles a tile's size."),
+        new("ItemRemoved", "EventCallback<MetroAppItem>", "Raised after the × control removes a tile."),
+        new("ChildContent", "RenderFragment?", "Custom tile content when Items is not set."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

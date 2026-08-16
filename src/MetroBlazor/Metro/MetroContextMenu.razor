@@ -1,0 +1,56 @@
+@namespace MetroBlazor
+
+<div class="metro-context-menu-host @Class" @attributes="AdditionalAttributes"
+     @oncontextmenu="OpenMenu" @oncontextmenu:preventDefault="true">
+    @ChildContent
+</div>
+@if (isOpen)
+{
+    <div class="metro-context-menu-layer" @onclick="Close" @oncontextmenu="Close" @oncontextmenu:preventDefault="true">
+        <div class="metro-context-menu" role="menu" aria-label="@AriaLabel"
+             style="left: @(menuX)px; top: @(menuY)px;"
+             @onclick:stopPropagation="true" @oncontextmenu:stopPropagation="true">
+            @foreach (var item in Items)
+            {
+                <button type="button" class="metro-context-menu-item" role="menuitem" disabled="@item.Disabled" @onclick="() => InvokeItem(item)">
+                    @if (!string.IsNullOrWhiteSpace(item.Icon))
+                    {
+                        <MetroIcon Name="@item.Icon" Size="MetroIconSize.Small" />
+                    }
+                    <span>@item.Label</span>
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<MetroCommandItem> Items { get; set; } = Enumerable.Empty<MetroCommandItem>();
+    [Parameter] public EventCallback<MetroCommandItem> ItemClick { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Context menu";
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool isOpen;
+    private double menuX;
+    private double menuY;
+
+    private void OpenMenu(MouseEventArgs args)
+    {
+        menuX = args.ClientX;
+        menuY = args.ClientY;
+        isOpen = true;
+    }
+
+    private void Close() => isOpen = false;
+
+    private async Task InvokeItem(MetroCommandItem item)
+    {
+        Close();
+        if (!item.Disabled)
+        {
+            await ItemClick.InvokeAsync(item);
+        }
+    }
+}

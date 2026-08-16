@@ -1,0 +1,54 @@
+@page "/components/slider"
+
+<PageTitle>Slider — MetroBlazor</PageTitle>
+
+<DemoSection Title="Value binding" Description="A touch-sized range control with explicit value feedback."
+             Code="@BindingCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroSlider Label="Brightness" @bind-Value="sliderValue" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Brightness: @sliderValue</MetroText>
+</DemoSection>
+
+<DemoSection Title="Range, step and disabled" Description="Constrain the range with Min, Max and Step, or freeze the control with Disabled."
+             Code="@RangeCode">
+    <div class="showcase-control-card showcase-single-demo showcase-stack-demo">
+        <MetroSlider Label="Volume (0–10, step 0.5)" Min="0" Max="10" Step="0.5" @bind-Value="volumeValue" />
+        <MetroSlider Label="Disabled" Value="40" Disabled="true" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Volume: @volumeValue</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string BindingCode = @"<MetroSlider Label=""Brightness"" @bind-Value=""sliderValue"" />
+
+@code {
+    private double sliderValue = 72;
+}";
+
+    private const string RangeCode = @"<MetroSlider Label=""Volume"" Min=""0"" Max=""10"" Step=""0.5"" @bind-Value=""volumeValue"" />
+<MetroSlider Label=""Disabled"" Value=""40"" Disabled=""true"" />";
+
+    private double sliderValue = 72;
+    private double volumeValue = 4;
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Label", "string", "Heading shown above the track, alongside the current value."),
+        new("Value", "double", "Current value; supports @bind-Value."),
+        new("Min", "double", "Minimum of the range. Default 0."),
+        new("Max", "double", "Maximum of the range. Default 100."),
+        new("Step", "double", "Increment between values. Default 1."),
+        new("ValueChanged", "EventCallback<double>", "Raised while the thumb is dragged (oninput)."),
+        new("Disabled", "bool", "Disables interaction with the track."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

@@ -1,0 +1,47 @@
+@page "/components/list"
+
+<PageTitle>List view — MetroBlazor</PageTitle>
+
+<DemoSection Title="Items" Description="A flat, touch-friendly list with full-row activation."
+             Code="@ItemsCode">
+    <MetroListView TItem="string" Items="listItems" ItemClick="ListClicked">
+        <ItemTemplate Context="item">
+            <div class="showcase-list-item-content">
+                <span class="showcase-list-image" aria-hidden="true"><MetroIcon Name="folder" Size="MetroIconSize.Medium" /></span>
+                <span>@item</span>
+            </div>
+        </ItemTemplate>
+    </MetroListView>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@listStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string ItemsCode = @"<MetroListView TItem=""string"" Items=""listItems"" ItemClick=""ListClicked"">
+    <ItemTemplate Context=""item""><span>@item</span></ItemTemplate>
+</MetroListView>";
+
+    private readonly IReadOnlyList<string> listItems = ["Recent files", "Shared with me", "Favorites", "Offline files"];
+    private string listStatus = "Select a list item.";
+
+    private Task ListClicked(string item)
+    {
+        listStatus = $"{item} selected.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Items", "IEnumerable<TItem>", "Items rendered as rows. (required)"),
+        new("ItemTemplate", "RenderFragment<TItem>?", "Custom row content; falls back to ToString()."),
+        new("ItemClick", "EventCallback<TItem>", "Raised when a row is activated."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

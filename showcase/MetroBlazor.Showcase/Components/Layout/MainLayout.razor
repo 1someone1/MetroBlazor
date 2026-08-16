@@ -1,8 +1,94 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@implements IDisposable
 @using MetroBlazor
+@inject NavigationManager Navigation
 
 <MetroTheme>
-    <main class="metro-page">
-        @Body
-    </main>
+    <MetroLayout Brand="METROBLAZOR" SidebarCollapsed="@sidebarCollapsed" SidebarCollapsedChanged="@(value => sidebarCollapsed = value)">
+        <BrandIcon>
+            <img class="showcase-brand-icon" src="metroblazor-icon.svg" alt="" />
+        </BrandIcon>
+        <SidebarContent>
+            <MetroNavigation Items="DocsCatalog.NavigationItems"
+                             GroupIcons="DocsCatalog.GroupIcons"
+                             CollapsibleGroups
+                             SelectedKey="@CurrentEntry?.Key"
+                             ItemClick="NavigateToEntry" />
+        </SidebarContent>
+
+        <ChildContent>
+            <div class="showcase-docs-main">
+                @if (CurrentEntry is not null)
+                {
+                    <header class="showcase-header">
+                        <div class="showcase-header-top">
+                            @if (HeaderBreadcrumb.Count > 0)
+                            {
+                                <MetroBreadcrumb Items="HeaderBreadcrumb" ItemClick="HeaderBreadcrumbClicked" />
+                            }
+                            else
+                            {
+                                <span></span>
+                            }
+                            <ThemeSwitcher />
+                        </div>
+                        <MetroText TextStyle="MetroTextStyle.Display">@CurrentEntry.Title</MetroText>
+                        <MetroText TextStyle="MetroTextStyle.Body" Class="showcase-lede">@CurrentEntry.Description</MetroText>
+                    </header>
+                }
+                @Body
+            </div>
+        </ChildContent>
+    </MetroLayout>
 </MetroTheme>
+
+@code {
+    private bool sidebarCollapsed;
+
+    private DocsEntry? CurrentEntry => DocsCatalog.FindByPath(Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0] is { Length: > 0 } path ? "/" + path : "/");
+
+    // Parents only: the current page is the heading below, so it is not repeated
+    // as the trailing breadcrumb item.
+    private IReadOnlyList<MetroBreadcrumbItem> HeaderBreadcrumb
+    {
+        get
+        {
+            var entry = CurrentEntry;
+            if (entry is null || entry.Key == "overview")
+            {
+                return [];
+            }
+
+            var items = new List<MetroBreadcrumbItem>
+            {
+                new() { Key = "overview", Label = "Docs" }
+            };
+            if (entry.Route.StartsWith("/components/", StringComparison.Ordinal))
+            {
+                items.Add(new() { Key = "group", Label = entry.Group });
+            }
+            return items;
+        }
+    }
+
+    protected override void OnInitialized() => Navigation.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args) => StateHasChanged();
+
+    private void NavigateToEntry(MetroNavigationItem item)
+    {
+        var entry = DocsCatalog.Entries.FirstOrDefault(candidate => candidate.Key == item.Key);
+        if (entry is not null)
+        {
+            Navigation.NavigateTo(entry.Route);
+        }
+    }
+
+    private Task HeaderBreadcrumbClicked(MetroBreadcrumbItem item)
+    {
+        Navigation.NavigateTo("/");
+        return Task.CompletedTask;
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

@@ -1,0 +1,45 @@
+@page "/components/checkbox"
+
+<PageTitle>Checkbox — MetroBlazor</PageTitle>
+
+<DemoSection Title="Checkbox" Description="A touch-sized checkbox with a visible Metro check state."
+             Code="@BasicCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroCheckbox Label="Use cellular data" @bind-Checked="cellularEnabled" />
+        <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Cellular data is @(cellularEnabled ? "allowed" : "blocked").</MetroText>
+    </div>
+</DemoSection>
+
+<DemoSection Title="States" Description="Disabled checkboxes keep their visual state but no longer respond to input."
+             Code="@StatesCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroCheckbox Label="Disabled checked" Checked="true" Disabled="true" />
+        <MetroCheckbox Label="Disabled unchecked" Disabled="true" />
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string BasicCode = @"<MetroCheckbox Label=""Use cellular data"" @bind-Checked=""cellularEnabled"" />";
+
+    private const string StatesCode = @"<MetroCheckbox Label=""Disabled checked"" Checked=""true"" Disabled=""true"" />
+<MetroCheckbox Label=""Disabled unchecked"" Disabled=""true"" />";
+
+    private bool cellularEnabled;
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Label", "string", "Visible label rendered beside the box. (required)"),
+        new("Checked", "bool", "Whether the box is checked. Combine with CheckedChanged or @bind-Checked."),
+        new("CheckedChanged", "EventCallback<bool>", "Invoked with the new state on change; supports @bind-Checked."),
+        new("Disabled", "bool", "Disables interaction while keeping the current state visible."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

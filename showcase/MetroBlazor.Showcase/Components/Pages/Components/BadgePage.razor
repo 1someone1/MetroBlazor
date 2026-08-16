@@ -1,0 +1,60 @@
+@page "/components/badge"
+
+<PageTitle>Badge — MetroBlazor</PageTitle>
+
+<DemoSection Title="Labels" Description="Compact uppercase status and count labels for tiles and commands."
+             Code="@LabelsCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <div class="showcase-inline-controls"><MetroBadge>New</MetroBadge><MetroBadge>12</MetroBadge><MetroBadge>Syncing</MetroBadge></div>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Live count" Description="Badges are plain content, so a bound value updates in place."
+             Code="@CountCode">
+    <div class="showcase-control-card">
+        <div class="showcase-card-title"><MetroText TextStyle="MetroTextStyle.Subheader">Unread mail</MetroText><MetroBadge>@unreadCount</MetroBadge></div>
+        <div class="showcase-inline-controls">
+            <MetroButton Quiet OnClick="ReceiveMail">Receive mail</MetroButton>
+            <MetroButton Quiet OnClick="MarkRead">Mark all read</MetroButton>
+        </div>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string LabelsCode = @"<MetroBadge>New</MetroBadge>
+<MetroBadge>12</MetroBadge>
+<MetroBadge>Syncing</MetroBadge>";
+    private const string CountCode = @"<MetroBadge>@unreadCount</MetroBadge>";
+
+    private int unreadCount = 3;
+    private string status = "3 unread messages.";
+
+    private Task ReceiveMail(MouseEventArgs _)
+    {
+        unreadCount++;
+        status = $"{unreadCount} unread messages.";
+        return Task.CompletedTask;
+    }
+
+    private Task MarkRead(MouseEventArgs _)
+    {
+        unreadCount = 0;
+        status = "All messages read.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("ChildContent", "RenderFragment", "Badge content: a short status word or count. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

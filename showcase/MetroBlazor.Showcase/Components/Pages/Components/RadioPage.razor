@@ -1,0 +1,48 @@
+@page "/components/radio"
+
+<PageTitle>Radio — MetroBlazor</PageTitle>
+
+<DemoSection Title="Group" Description="Radios sharing a GroupName act as a single-choice group; selection flows back through ValueChanged."
+             Code="@GroupCode">
+    <div class="showcase-control-card showcase-single-demo showcase-stack-demo">
+        <MetroRadio Label="Automatic" GroupName="mode" Value="automatic" Checked="@(radioValue == "automatic")" ValueChanged="SetRadio" />
+        <MetroRadio Label="Manual" GroupName="mode" Value="manual" Checked="@(radioValue == "manual")" ValueChanged="SetRadio" />
+        <MetroRadio Label="Scheduled (disabled)" GroupName="mode" Value="scheduled" Disabled="true" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Selected mode: @radioValue</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string GroupCode = @"<MetroRadio Label=""Automatic"" GroupName=""mode"" Value=""automatic""
+               Checked=""@(radioValue == ""automatic"")"" ValueChanged=""SetRadio"" />
+<MetroRadio Label=""Manual"" GroupName=""mode"" Value=""manual""
+               Checked=""@(radioValue == ""manual"")"" ValueChanged=""SetRadio"" />
+
+@code {
+    private string radioValue = ""automatic"";
+    private Task SetRadio(string value) { radioValue = value; return Task.CompletedTask; }
+}";
+
+    private string radioValue = "automatic";
+
+    private Task SetRadio(string value) { radioValue = value; return Task.CompletedTask; }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Label", "string", "Text shown next to the radio. (required)"),
+        new("GroupName", "string", "Shared group name; radios with the same name are mutually exclusive. (required)"),
+        new("Value", "string", "Value passed to ValueChanged when this radio is selected."),
+        new("Checked", "bool", "Whether this radio is currently selected."),
+        new("ValueChanged", "EventCallback<string>", "Raised with Value when the radio becomes selected."),
+        new("Disabled", "bool", "Disables interaction and dims the control."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

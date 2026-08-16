@@ -1,0 +1,53 @@
+@page "/components/tree"
+
+<PageTitle>Tree view — MetroBlazor</PageTitle>
+
+<DemoSection Title="Nodes" Description="Expandable hierarchical navigation for folders and settings categories. Selecting a parent expands or collapses it."
+             Code="@NodesCode">
+    <MetroTreeView Nodes="treeNodes" SelectedKey="selectedTreeNode" NodeClick="TreeNodeClicked" />
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@treeStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string NodesCode = @"<MetroTreeView Nodes=""treeNodes"" SelectedKey=""selectedTreeNode"" NodeClick=""TreeNodeClicked"" />
+
+@code {
+    private readonly IReadOnlyList<MetroTreeNode> treeNodes =
+    [
+        new() { Key = ""storage"", Label = ""Storage"", Icon = ""folder"",
+            Children = [new() { Key = ""pictures"", Label = ""Pictures"", Icon = ""folder"" }] },
+        new() { Key = ""downloads"", Label = ""Downloads"", Icon = ""download"" }
+    ];
+}";
+
+    private readonly IReadOnlyList<MetroTreeNode> treeNodes =
+    [
+        new() { Key = "storage", Label = "Storage", Icon = "folder", Children = [new() { Key = "pictures", Label = "Pictures", Icon = "folder" }, new() { Key = "music", Label = "Music", Icon = "folder" }] },
+        new() { Key = "downloads", Label = "Downloads", Icon = "download" }
+    ];
+    private string? selectedTreeNode;
+    private string treeStatus = "Select a node.";
+
+    private Task TreeNodeClicked(MetroTreeNode node)
+    {
+        selectedTreeNode = node.Key;
+        treeStatus = $"{node.Label} selected.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Nodes", "IEnumerable<MetroTreeNode>", "Root nodes; each MetroTreeNode has Key, Label, Icon, and Children. (required)"),
+        new("SelectedKey", "string?", "Key of the currently selected node, highlighted in the tree."),
+        new("NodeClick", "EventCallback<MetroTreeNode>", "Raised when a node is selected; parents also expand or collapse."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

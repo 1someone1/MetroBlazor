@@ -101,19 +101,25 @@ public class MetroControlTests
     }
 
     [Fact]
-    public void MetroAppGrid_renders_items_and_emits_selected_item()
+    public void MetroTileGroup_readonly_mode_emits_item_click_without_edit_controls()
     {
         using var ctx = new BunitContext();
-        var item = new MetroAppItem { Label = "Photos", Icon = "*" };
+        var item = new MetroAppItem { Label = "Photos", Icon = "image" };
         MetroAppItem? selected = null;
-        var cut = ctx.Render<MetroAppGrid>(p => p
-            .Add(x => x.Items, new[] { item })
+        var cut = ctx.Render<MetroTileGroup>(p => p
+            .Add(x => x.Items, new List<MetroAppItem> { item })
+            .Add(x => x.ReadOnly, true)
+            .Add(x => x.Columns, 4)
             .Add(x => x.ItemClick, EventCallback.Factory.Create<MetroAppItem>(this, result => selected = result)));
 
         Assert.Single(cut.FindAll(".metro-tile"));
+        Assert.Contains("columns", cut.Find(".metro-tile-group-grid").ClassName);
         cut.Find(".metro-tile").Click();
-
         Assert.Same(item, selected);
+
+        // Read-only mode renders no edit-mode machinery at all.
+        Assert.Empty(cut.FindAll(".metro-tile-edit-control"));
+        Assert.Empty(cut.FindAll(".metro-tile-group-item"));
     }
 
     [Fact]
@@ -181,6 +187,32 @@ public class MetroControlTests
     }
 
     [Fact]
+    public void MetroNavigation_group_header_activates_first_item()
+    {
+        using var ctx = new BunitContext();
+        string? selected = null;
+        MetroNavigationItem? clicked = null;
+        var items = new[]
+        {
+            new MetroNavigationItem { Key = "tile", Label = "Tile", Icon = "tile", Group = "Surface" },
+            new MetroNavigationItem { Key = "hub", Label = "Hub", Icon = "hub", Group = "Surface" }
+        };
+        var groupIcons = new Dictionary<string, string> { ["Surface"] = "apps" };
+        var cut = ctx.Render<MetroNavigation>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.GroupIcons, groupIcons)
+            .Add(x => x.SelectedKeyChanged, EventCallback.Factory.Create<string>(this, value => selected = value))
+            .Add(x => x.ItemClick, EventCallback.Factory.Create<MetroNavigationItem>(this, item => clicked = item)));
+
+        Assert.Single(cut.FindAll(".metro-navigation-group"));
+        Assert.Single(cut.FindAll(".metro-navigation-group .metro-icon"));
+        cut.Find(".metro-navigation-group").Click();
+
+        Assert.Equal("tile", selected);
+        Assert.Equal("tile", clicked?.Key);
+    }
+
+    [Fact]
     public void MetroBlade_renders_and_closes_from_scrim()
     {
         using var ctx = new BunitContext();
@@ -208,6 +240,94 @@ public class MetroControlTests
         Assert.Equal("M0 0h24v24H0z", overrideCut.Find("path").GetAttribute("d"));
         Assert.NotEmpty(MetroIconCatalog.Names);
         Assert.Contains("save", MetroIconCatalog.Search("save"));
+    }
+
+    [Fact]
+    public void MetroIcon_variant_picks_outline_path_and_childcontent_projects_svg()
+    {
+        using var ctx = new BunitContext();
+        var filled = ctx.Render<MetroIcon>(p => p.Add(x => x.Name, "settings"));
+        var outline = ctx.Render<MetroIcon>(p => p.Add(x => x.Name, "settings").Add(x => x.Variant, MetroIconVariant.Outline));
+
+        Assert.NotEqual(filled.Find("path").GetAttribute("d"), outline.Find("path").GetAttribute("d"));
+
+        // Icons without an outline variant fall back to the filled path.
+        var homeFilled = ctx.Render<MetroIcon>(p => p.Add(x => x.Name, "home"));
+        var fallback = ctx.Render<MetroIcon>(p => p.Add(x => x.Name, "home").Add(x => x.Variant, MetroIconVariant.Outline));
+        Assert.Equal(homeFilled.Find("path").GetAttribute("d"), fallback.Find("path").GetAttribute("d"));
+
+        var custom = ctx.Render<MetroIcon>(p => p.AddChildContent("<svg viewBox=\"0 0 24 24\"><rect width=\"24\" height=\"24\" /></svg>"));
+        Assert.Single(custom.FindAll("rect"));
+    }
+
+    [Fact]
+    public void MetroNavigation_collapsible_groups_toggle_items()
+    {
+        using var ctx = new BunitContext();
+        string? selected = null;
+        var items = new[]
+        {
+            new MetroNavigationItem { Key = "tile", Label = "Tile", Icon = "tile", Group = "Surface" },
+            new MetroNavigationItem { Key = "hub", Label = "Hub", Icon = "hub", Group = "Surface" },
+            new MetroNavigationItem { Key = "button", Label = "Button", Icon = "cursor-click", Group = "Forms" }
+        };
+        var cut = ctx.Render<MetroNavigation>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.CollapsibleGroups, true)
+            .Add(x => x.SelectedKeyChanged, EventCallback.Factory.Create<string>(this, value => selected = value)));
+
+        // All groups start collapsed when nothing is selected.
+        Assert.Empty(cut.FindAll(".metro-navigation-item"));
+
+        // Expanding a group opens straight into its first item.
+        cut.FindAll(".metro-navigation-group")[0].Click();
+        Assert.Equal(2, cut.FindAll(".metro-navigation-item").Count);
+        Assert.Equal("tile", selected);
+
+        // Clicking the open group collapses it again.
+        cut.FindAll(".metro-navigation-group")[0].Click();
+        Assert.Empty(cut.FindAll(".metro-navigation-item"));
+    }
+
+    [Fact]
+    public void MetroNavigation_collapsible_groups_close_others_when_one_opens()
+    {
+        using var ctx = new BunitContext();
+        var items = new[]
+        {
+            new MetroNavigationItem { Key = "tile", Label = "Tile", Icon = "tile", Group = "Surface" },
+            new MetroNavigationItem { Key = "button", Label = "Button", Icon = "cursor-click", Group = "Forms" }
+        };
+        var cut = ctx.Render<MetroNavigation>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.CollapsibleGroups, true));
+
+        cut.FindAll(".metro-navigation-group")[0].Click();
+        Assert.Single(cut.FindAll(".metro-navigation-item"));
+
+        // Accordion: opening Forms closes Surface.
+        cut.FindAll(".metro-navigation-group")[1].Click();
+        var visible = cut.FindAll(".metro-navigation-item");
+        Assert.Single(visible);
+        Assert.Contains("Button", visible[0].TextContent);
+    }
+
+    [Fact]
+    public void MetroNavigation_collapsible_groups_keep_selected_group_open()
+    {
+        using var ctx = new BunitContext();
+        var items = new[]
+        {
+            new MetroNavigationItem { Key = "tile", Label = "Tile", Icon = "tile", Group = "Surface" },
+            new MetroNavigationItem { Key = "button", Label = "Button", Icon = "cursor-click", Group = "Forms" }
+        };
+        var cut = ctx.Render<MetroNavigation>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.CollapsibleGroups, true)
+            .Add(x => x.SelectedKey, "button"));
+
+        Assert.Single(cut.FindAll(".metro-navigation-item"));
+        Assert.Equal("true", cut.FindAll(".metro-navigation-group")[1].GetAttribute("aria-expanded"));
     }
 
     [Fact]
@@ -273,5 +393,195 @@ public class MetroControlTests
         cut.FindAll(".metro-tile-group-item")[0].TriggerEvent("oncontextmenu", new MouseEventArgs());
         Assert.Empty(cut.FindAll(".metro-tile-edit-control"));
 
+    }
+
+    [Fact]
+    public void MetroTileGroup_reorders_via_direct_drag_without_edit_mode()
+    {
+        using var ctx = new BunitContext();
+        var first = new MetroAppItem { Label = "First", Size = MetroTileSize.Small };
+        var second = new MetroAppItem { Label = "Second", Size = MetroTileSize.Small };
+        var third = new MetroAppItem { Label = "Third", Size = MetroTileSize.Small };
+        MetroAppItem? moved = null;
+        var cut = ctx.Render<MetroTileGroup>(p => p
+            .Add(x => x.Items, new List<MetroAppItem> { first, second, third })
+            .Add(x => x.ItemMoved, EventCallback.Factory.Create<MetroAppItem>(this, item => moved = item)));
+
+        // No edit mode entered: tiles are always draggable, like the Windows 8.1 Start screen.
+        Assert.Equal("true", cut.Find(".metro-tile-group-item .metro-tile").GetAttribute("draggable"));
+
+        cut.FindAll(".metro-tile-group-item .metro-tile")[0].TriggerEvent("ondragstart", new DragEventArgs());
+        cut.FindAll(".metro-tile-group-item")[2].TriggerEvent("ondrop", new DragEventArgs());
+
+        Assert.Same(first, moved);
+        var labels = cut.FindAll(".metro-tile-group-item .metro-tile .metro-tile-label").Select(e => e.TextContent).ToArray();
+        Assert.Equal(["Second", "Third", "First"], labels);
+    }
+
+    [Fact]
+    public void MetroTooltip_renders_tooltip_text_with_role()
+    {
+        using var ctx = new BunitContext();
+        var cut = ctx.Render<MetroTooltip>(p => p
+            .Add(x => x.Text, "Save document")
+            .Add(x => x.ChildContent, (RenderFragment)(builder => builder.AddContent(0, "Hover me"))));
+
+        var tooltip = cut.Find("[role=tooltip]");
+        Assert.Equal("Save document", tooltip.TextContent);
+        Assert.Contains("metro-tooltip-top", cut.Find(".metro-tooltip-host").ClassName);
+    }
+
+    [Fact]
+    public void MetroTooltip_omits_tooltip_when_text_is_empty()
+    {
+        using var ctx = new BunitContext();
+        var cut = ctx.Render<MetroTooltip>(p => p
+            .Add(x => x.ChildContent, (RenderFragment)(builder => builder.AddContent(0, "Plain"))));
+
+        Assert.Empty(cut.FindAll("[role=tooltip]"));
+    }
+
+    [Fact]
+    public void MetroContextMenu_opens_at_pointer_and_invokes_item()
+    {
+        using var ctx = new BunitContext();
+        var items = new List<MetroCommandItem>
+        {
+            new() { Key = "open", Label = "Open", Icon = "folder" },
+            new() { Key = "delete", Label = "Delete", Icon = "delete" },
+        };
+        MetroCommandItem? clicked = null;
+        var cut = ctx.Render<MetroContextMenu>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.ItemClick, EventCallback.Factory.Create<MetroCommandItem>(this, item => clicked = item))
+            .Add(x => x.ChildContent, (RenderFragment)(builder => builder.AddContent(0, "Target"))));
+
+        Assert.Empty(cut.FindAll(".metro-context-menu"));
+
+        cut.Find(".metro-context-menu-host").TriggerEvent("oncontextmenu", new MouseEventArgs { ClientX = 40, ClientY = 24 });
+
+        var menu = cut.Find(".metro-context-menu");
+        Assert.Equal("menu", menu.GetAttribute("role"));
+        Assert.Contains("left: 40px", menu.GetAttribute("style"));
+        Assert.Contains("top: 24px", menu.GetAttribute("style"));
+        Assert.Equal(2, cut.FindAll(".metro-context-menu-item").Count);
+
+        cut.FindAll(".metro-context-menu-item")[0].Click();
+        Assert.Equal("open", clicked?.Key);
+        Assert.Empty(cut.FindAll(".metro-context-menu"));
+    }
+
+    [Fact]
+    public void MetroContextMenu_ignores_disabled_items()
+    {
+        using var ctx = new BunitContext();
+        var items = new List<MetroCommandItem> { new() { Key = "x", Label = "Nope", Disabled = true } };
+        var invoked = false;
+        var cut = ctx.Render<MetroContextMenu>(p => p
+            .Add(x => x.Items, items)
+            .Add(x => x.ItemClick, EventCallback.Factory.Create<MetroCommandItem>(this, _ => invoked = true))
+            .Add(x => x.ChildContent, (RenderFragment)(builder => builder.AddContent(0, "Target"))));
+
+        cut.Find(".metro-context-menu-host").TriggerEvent("oncontextmenu", new MouseEventArgs());
+        cut.Find(".metro-context-menu-item").Click();
+        Assert.False(invoked);
+    }
+
+    [Fact]
+    public void MetroRating_fills_stars_up_to_value_and_updates_on_click()
+    {
+        using var ctx = new BunitContext();
+        var value = 3;
+        var cut = ctx.Render<MetroRating>(p => p
+            .Add(x => x.Value, value)
+            .Add(x => x.Max, 5)
+            .Add(x => x.ValueChanged, EventCallback.Factory.Create<int>(this, v => value = v)));
+
+        Assert.Equal("slider", cut.Find(".metro-rating").GetAttribute("role"));
+        Assert.Equal(5, cut.FindAll(".metro-rating-star").Count);
+        Assert.Equal(3, cut.FindAll(".metro-rating-star.filled").Count);
+
+        cut.FindAll(".metro-rating-star")[4].Click();
+        Assert.Equal(5, value);
+
+        // Simulate two-way binding pushing the new value back in, then clear by re-clicking.
+        var cut2 = ctx.Render<MetroRating>(p => p
+            .Add(x => x.Value, value)
+            .Add(x => x.ValueChanged, EventCallback.Factory.Create<int>(this, v => value = v)));
+        cut2.FindAll(".metro-rating-star")[4].Click();
+        Assert.Equal(0, value);
+    }
+
+    [Fact]
+    public void MetroRating_previews_tentative_value_on_hover()
+    {
+        using var ctx = new BunitContext();
+        var cut = ctx.Render<MetroRating>(p => p
+            .Add(x => x.Value, 2)
+            .Add(x => x.ValueChanged, EventCallback.Factory.Create<int>(this, _ => { })));
+
+        Assert.Equal(2, cut.FindAll(".metro-rating-star.filled").Count);
+
+        cut.FindAll(".metro-rating-star")[3].TriggerEvent("onmouseenter", new MouseEventArgs());
+        Assert.Equal(4, cut.FindAll(".metro-rating-star.tentative").Count);
+        Assert.Empty(cut.FindAll(".metro-rating-star.filled"));
+
+        cut.Find(".metro-rating").TriggerEvent("onmouseleave", new MouseEventArgs());
+        Assert.Empty(cut.FindAll(".metro-rating-star.tentative"));
+        Assert.Equal(2, cut.FindAll(".metro-rating-star.filled").Count);
+    }
+
+    [Fact]
+    public void MetroRating_supports_keyboard_adjustment()
+    {
+        using var ctx = new BunitContext();
+        var value = 2;
+        var cut = ctx.Render<MetroRating>(p => p
+            .Add(x => x.Value, value)
+            .Add(x => x.ValueChanged, EventCallback.Factory.Create<int>(this, v => value = v)));
+
+        cut.Find(".metro-rating").KeyDown(new KeyboardEventArgs { Key = "ArrowRight" });
+        Assert.Equal(3, value);
+
+        var cut2 = ctx.Render<MetroRating>(p => p
+            .Add(x => x.Value, value)
+            .Add(x => x.ValueChanged, EventCallback.Factory.Create<int>(this, v => value = v)));
+        cut2.Find(".metro-rating").KeyDown(new KeyboardEventArgs { Key = "ArrowLeft" });
+        Assert.Equal(2, value);
+    }
+
+    [Fact]
+    public void MetroTile_live_text_splits_on_word_boundaries()
+    {
+        var pages = MetroTile.SplitLiveText("alpha beta gamma delta", 12).ToArray();
+        Assert.Equal(["alpha beta", "gamma delta"], pages);
+    }
+
+    [Fact]
+    public void MetroTile_live_text_hard_splits_words_longer_than_a_page()
+    {
+        var pages = MetroTile.SplitLiveText("abcdefghijklmno", 10).ToArray();
+        Assert.Equal(["abcdefghij", "klmno"], pages);
+    }
+
+    [Fact]
+    public void MetroTile_live_text_keeps_short_text_on_one_page()
+    {
+        Assert.Single(MetroTile.SplitLiveText("short text", 70));
+    }
+
+    [Fact]
+    public void MetroTile_live_wraps_default_face_for_flip_back_animation()
+    {
+        using var ctx = new BunitContext();
+        var cut = ctx.Render<MetroTile>(p => p
+            .Add(x => x.Label, "Mail")
+            .Add(x => x.Live, true)
+            .Add(x => x.LiveText, "3 unread messages"));
+
+        Assert.Equal("Mail", cut.Find(".metro-tile-front-content .metro-tile-label").TextContent);
+
+        var plain = ctx.Render<MetroTile>(p => p.Add(x => x.Label, "Mail"));
+        Assert.Empty(plain.FindAll(".metro-tile-front-content"));
     }
 }

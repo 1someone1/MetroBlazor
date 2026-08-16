@@ -1,0 +1,67 @@
+@page "/components/flyout"
+
+<PageTitle>Flyout — MetroBlazor</PageTitle>
+
+<DemoSection Title="Quick actions" Description="A contextual surface with a scrim and entrance motion. Click the scrim or the close button to dismiss."
+             Code="@FlyoutCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroButton OnClick="OpenFlyout">Open flyout</MetroButton>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@flyoutStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+<MetroFlyout Open="flyoutOpen" Title="Quick actions" OnClose="CloseFlyout">
+    <MetroText TextStyle="MetroTextStyle.Body">Flyouts keep contextual actions close to the current surface.</MetroText>
+    <MetroButton OnClick="CloseFlyout">Done</MetroButton>
+</MetroFlyout>
+
+@code {
+    private const string FlyoutCode = @"<MetroButton OnClick=""OpenFlyout"">Open flyout</MetroButton>
+
+<MetroFlyout Open=""flyoutOpen"" Title=""Quick actions"" OnClose=""CloseFlyout"">
+    <MetroText TextStyle=""MetroTextStyle.Body"">Flyouts keep contextual actions close to the current surface.</MetroText>
+    <MetroButton OnClick=""CloseFlyout"">Done</MetroButton>
+</MetroFlyout>
+
+@code {
+    private bool flyoutOpen;
+
+    private void OpenFlyout() => flyoutOpen = true;
+    private void CloseFlyout() => flyoutOpen = false;
+}";
+
+    private bool flyoutOpen;
+    private string flyoutStatus = "Flyout is closed.";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Open", "bool", "Controls whether the flyout is visible."),
+        new("Title", "string", "Optional header text; empty hides the header."),
+        new("Placement", "string", "Edge the flyout enters from. Defaults to \"bottom\"."),
+        new("ChildContent", "RenderFragment", "Flyout body content. (required)"),
+        new("OnClose", "EventCallback", "Raised by the close button and by clicking the scrim.")
+    ];
+
+    private Task OpenFlyout(MouseEventArgs _)
+    {
+        flyoutOpen = true;
+        flyoutStatus = "Flyout is open.";
+        return Task.CompletedTask;
+    }
+
+    private Task CloseFlyout()
+    {
+        flyoutOpen = false;
+        flyoutStatus = "Flyout is closed.";
+        return Task.CompletedTask;
+    }
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

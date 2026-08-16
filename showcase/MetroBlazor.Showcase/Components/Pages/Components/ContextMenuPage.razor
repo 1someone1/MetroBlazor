@@ -1,0 +1,68 @@
+@page "/components/context-menu"
+
+<PageTitle>Context menu — MetroBlazor</PageTitle>
+
+<DemoSection Title="Right-click target" Description="Wrap any content; a right-click opens the menu at the pointer, and clicking anywhere else dismisses it."
+             Code="@ContextMenuCode">
+    <MetroContextMenu Items="menuItems" ItemClick="MenuItemClicked">
+        <div class="showcase-control-card showcase-single-demo">
+            <MetroText TextStyle="MetroTextStyle.Body">Right-click anywhere in this area.</MetroText>
+        </div>
+    </MetroContextMenu>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@menuStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string ContextMenuCode = @"<MetroContextMenu Items=""menuItems"" ItemClick=""MenuItemClicked"">
+    <div class=""showcase-control-card"">
+        Right-click anywhere in this area.
+    </div>
+</MetroContextMenu>
+
+@code {
+    private readonly IReadOnlyList<MetroCommandItem> menuItems =
+    [
+        new() { Key = ""open"", Label = ""Open"", Icon = ""folder"" },
+        new() { Key = ""rename"", Label = ""Rename"", Icon = ""edit"" },
+        new() { Key = ""delete"", Label = ""Delete"", Icon = ""delete"", Disabled = true }
+    ];
+
+    private Task MenuItemClicked(MetroCommandItem item)
+    {
+        // item.Label identifies the invoked action
+        return Task.CompletedTask;
+    }
+}";
+
+    private string menuStatus = "Right-click the area above.";
+
+    private readonly IReadOnlyList<MetroCommandItem> menuItems =
+    [
+        new() { Key = "open", Label = "Open", Icon = "folder" },
+        new() { Key = "rename", Label = "Rename", Icon = "edit" },
+        new() { Key = "delete", Label = "Delete", Icon = "delete", Disabled = true }
+    ];
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Items", "IEnumerable<MetroCommandItem>", "Menu entries with optional icons and disabled states. (required)"),
+        new("ItemClick", "EventCallback<MetroCommandItem>", "Raised when an enabled menu item is invoked."),
+        new("ChildContent", "RenderFragment", "The target area that opens the menu on right-click. (required)"),
+        new("AriaLabel", "string", "Accessible label for the menu. Defaults to \"Context menu\".")
+    ];
+
+    private Task MenuItemClicked(MetroCommandItem item)
+    {
+        menuStatus = $"{item.Label} selected.";
+        return Task.CompletedTask;
+    }
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

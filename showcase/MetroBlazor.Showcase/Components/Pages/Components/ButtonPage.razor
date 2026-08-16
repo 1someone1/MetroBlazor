@@ -1,0 +1,78 @@
+@page "/components/button"
+
+<PageTitle>Button — MetroBlazor</PageTitle>
+
+<DemoSection Title="Variants" Description="Solid, quiet, and icon-only actions with square geometry and pressed feedback."
+             Code="@VariantsCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <div class="showcase-inline-controls">
+            <MetroButton OnClick="Save">Save changes</MetroButton>
+            <MetroButton Quiet Disabled="@saving">@(saving ? "Saving..." : "Cancel")</MetroButton>
+            <span class="showcase-icon-button-example">
+                <MetroButton Icon="arrow-left" IconOnly Bordered AriaLabel="Back" />
+                <small>Bordered / back</small>
+            </span>
+            <span class="showcase-icon-button-example">
+                <MetroButton Icon="search" IconOnly AriaLabel="Search" />
+                <small>Non-bordered</small>
+            </span>
+        </div>
+        <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-value">Icon buttons: bordered circular and non-bordered.</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@saveStatus</MetroText>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Disabled" Description="Disabled buttons keep their geometry but drop interaction and pressed feedback."
+             Code="@DisabledCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <div class="showcase-inline-controls">
+            <MetroButton Disabled="true">Save changes</MetroButton>
+            <MetroButton Quiet Disabled="true">Cancel</MetroButton>
+            <MetroButton Icon="search" IconOnly Disabled="true" AriaLabel="Search" />
+        </div>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string VariantsCode = @"<MetroButton OnClick=""Save"">Save changes</MetroButton>
+<MetroButton Quiet Disabled=""@saving"">Cancel</MetroButton>
+<MetroButton Icon=""arrow-left"" IconOnly Bordered AriaLabel=""Back"" />
+<MetroButton Icon=""search"" IconOnly AriaLabel=""Search"" />";
+
+    private const string DisabledCode = @"<MetroButton Disabled=""true"">Save changes</MetroButton>
+<MetroButton Quiet Disabled=""true"">Cancel</MetroButton>";
+
+    private bool saving;
+    private string saveStatus = "No changes saved yet.";
+
+    private async Task Save(MouseEventArgs _)
+    {
+        saving = true;
+        saveStatus = "Saving...";
+        await Task.Delay(350);
+        saving = false;
+        saveStatus = $"Saved at {DateTime.Now:HH:mm:ss}.";
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("ChildContent", "RenderFragment?", "Button text and inline content. Not rendered when IconOnly is set."),
+        new("OnClick", "EventCallback<MouseEventArgs>", "Invoked when the button is activated. Not invoked while Disabled."),
+        new("Quiet", "bool", "Borderless quiet variant for secondary actions."),
+        new("Icon", "string?", "MetroIcon name rendered before the content."),
+        new("IconOnly", "bool", "Renders only the icon; set AriaLabel for accessibility."),
+        new("Bordered", "bool", "Bordered circular treatment for icon-only buttons."),
+        new("AriaLabel", "string?", "Accessible label, applied when IconOnly is set."),
+        new("Disabled", "bool", "Disables interaction and dims the button."),
+        new("Type", "string", "HTML button type. Defaults to \"button\"."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

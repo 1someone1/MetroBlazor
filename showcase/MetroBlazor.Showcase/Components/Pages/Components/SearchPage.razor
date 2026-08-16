@@ -1,0 +1,41 @@
+@page "/components/search"
+
+<PageTitle>Search box — MetroBlazor</PageTitle>
+
+<DemoSection Title="Binding and clear" Description="Shows a search icon when empty and a clear action once text is entered."
+             Code="@BindingCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroSearchBox Placeholder="Search files" @bind-Value="searchValue" />
+        <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-value">Query: @searchValue</MetroText>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">
+        @(string.IsNullOrWhiteSpace(searchValue) ? "Type to search; use the × button to clear." : $"Searching for “{searchValue}”.")
+    </MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string BindingCode = @"<MetroSearchBox Placeholder=""Search files"" @bind-Value=""searchValue"" />
+
+@code {
+    private string? searchValue;
+}";
+
+    private string? searchValue;
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Value", "string?", "Current query text; supports @bind-Value."),
+        new("ValueChanged", "EventCallback<string?>", "Raised on each keystroke and when the clear button is pressed."),
+        new("Placeholder", "string", "Placeholder text. Default \"Search\"."),
+        new("AriaLabel", "string", "Accessible label for the input. Default \"Search\"."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

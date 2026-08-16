@@ -1,0 +1,44 @@
+@page "/theming"
+
+<PageTitle>Theming — MetroBlazor</PageTitle>
+
+<DemoSection Title="Variants" Description="Four variants ship with the library. Try them — this whole site reacts, because the docs themselves consume the cascading theme state.">
+    <div class="showcase-inline-controls">
+        <MetroButton Quiet="@(CurrentVariant != MetroThemeVariant.Dark)" OnClick="@(_ => SetTheme(MetroThemeVariant.Dark))">Dark</MetroButton>
+        <MetroButton Quiet="@(CurrentVariant != MetroThemeVariant.Light)" OnClick="@(_ => SetTheme(MetroThemeVariant.Light))">Light</MetroButton>
+        <MetroButton Quiet="@(CurrentVariant != MetroThemeVariant.Blue)" OnClick="@(_ => SetTheme(MetroThemeVariant.Blue))">Blue</MetroButton>
+        <MetroButton Quiet="@(CurrentVariant != MetroThemeVariant.Purple)" OnClick="@(_ => SetTheme(MetroThemeVariant.Purple))">Purple</MetroButton>
+        <MetroBadge>@CurrentVariant.ToString().ToUpperInvariant()</MetroBadge>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Setting the variant declaratively" Code="<MetroTheme Mode=&quot;Dark&quot; Variant=&quot;MetroThemeVariant.Blue&quot;>
+    <App />
+</MetroTheme>">
+    <MetroText TextStyle="MetroTextStyle.Body">
+        Pass <code>Variant</code> to <code>MetroTheme</code> to pin a variant at startup.
+    </MetroText>
+</DemoSection>
+
+<DemoSection Title="Switching at runtime" Code="[CascadingParameter] public MetroThemeState? ThemeState { get; set; }
+
+ThemeState!.Variant = MetroThemeVariant.Purple;">
+    <MetroText TextStyle="MetroTextStyle.Body">
+        Any descendant can capture the cascaded <code>MetroThemeState</code> and change the variant at runtime —
+        this is exactly what the switcher in the header of this site does.
+    </MetroText>
+</DemoSection>
+
+@code {
+    [CascadingParameter] private MetroThemeState? ThemeState { get; set; }
+
+    private MetroThemeVariant CurrentVariant => ThemeState?.Variant ?? MetroThemeVariant.Dark;
+
+    private void SetTheme(MetroThemeVariant variant)
+    {
+        if (ThemeState is not null)
+        {
+            ThemeState.Variant = variant;
+        }
+    }
+}

@@ -1,0 +1,71 @@
+@page "/components/semantic-zoom"
+
+<PageTitle>Semantic zoom — MetroBlazor</PageTitle>
+
+<DemoSection Title="Two zoom levels" Description="The Windows 8 grouped overview and detailed tile surface represent the same content at different zoom levels."
+             Code="@ZoomCode">
+    <MetroSemanticZoom @bind-ZoomedOut="zoomedOut">
+        <ZoomedInContent>
+            <MetroTileGroup Items="apps" ReadOnly="true" Columns="3" />
+        </ZoomedInContent>
+        <ZoomedOutContent>
+            <div class="showcase-semantic-groups">
+                <MetroTileGroup Title="Pinned apps" Items="pinnedApps" ReadOnly="true" />
+                <MetroTileGroup Title="System" Items="systemApps" ReadOnly="true" />
+            </div>
+        </ZoomedOutContent>
+    </MetroSemanticZoom>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Currently showing the @(zoomedOut ? "grouped overview (zoomed out)" : "detailed tiles (zoomed in)").</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string ZoomCode = @"<MetroSemanticZoom @bind-ZoomedOut=""zoomedOut"">
+    <ZoomedInContent>
+        <MetroTileGroup Items=""apps"" ReadOnly=""true"" Columns=""3"" />
+    </ZoomedInContent>
+    <ZoomedOutContent>
+        <MetroTileGroup Title=""Pinned apps"" Items=""pinnedApps"" ReadOnly=""true"" />
+        <MetroTileGroup Title=""System"" Items=""systemApps"" ReadOnly=""true"" />
+    </ZoomedOutContent>
+</MetroSemanticZoom>";
+
+    private bool zoomedOut;
+
+    private readonly IList<MetroAppItem> apps =
+    [
+        new() { Label = "Mail", SubLabel = "3 unread", Icon = "mail", AccentColor = "#0078D7" },
+        new() { Label = "Calendar", SubLabel = "Today", Icon = "calendar", AccentColor = "#107C10" },
+        new() { Label = "People", SubLabel = "Contacts", Icon = "people", AccentColor = "#E81123" },
+        new() { Label = "Settings", SubLabel = "System", Icon = "settings", AccentColor = "#5C2D91" },
+        new() { Label = "Photos", SubLabel = "Library", Icon = "image", AccentColor = "#008272" },
+        new() { Label = "Maps", SubLabel = "Explore", Icon = "location", AccentColor = "#CA5010" }
+    ];
+
+    private readonly IList<MetroAppItem> pinnedApps =
+    [
+        new() { Label = "Photos", Icon = "image", AccentColor = "#0078D7", Size = MetroTileSize.Small },
+        new() { Label = "Files", Icon = "folder", AccentColor = "#CA5010", Size = MetroTileSize.Small }
+    ];
+
+    private readonly IList<MetroAppItem> systemApps =
+    [
+        new() { Label = "Settings", Icon = "settings", AccentColor = "#5C2D91", Size = MetroTileSize.Small }
+    ];
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("ZoomedOut", "bool", "True shows the overview, false shows the detail. Supports @bind-ZoomedOut."),
+        new("ZoomedOutChanged", "EventCallback<bool>", "Raised when the built-in toggle flips the zoom level."),
+        new("ZoomedInContent", "RenderFragment", "Detailed view shown when ZoomedOut is false. (required)"),
+        new("ZoomedOutContent", "RenderFragment", "Grouped overview shown when ZoomedOut is true. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

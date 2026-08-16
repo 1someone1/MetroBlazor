@@ -1,0 +1,46 @@
+@page "/components/breadcrumb"
+
+<PageTitle>Breadcrumb — MetroBlazor</PageTitle>
+
+<DemoSection Title="Path navigation" Description="A flat slash-separated path. The current item is marked with aria-current; clicking any segment raises ItemClick."
+             Code="@PathCode">
+    <MetroBreadcrumb Items="breadcrumbs" CurrentKey="@currentBreadcrumb" ItemClick="BreadcrumbClicked" />
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string PathCode = @"<MetroBreadcrumb Items=""items"" CurrentKey=""@current"" ItemClick=""OnItemClick"" />";
+
+    private string currentBreadcrumb = "reports";
+    private string status = "Select a path segment.";
+
+    private readonly IReadOnlyList<MetroBreadcrumbItem> breadcrumbs =
+    [
+        new() { Key = "home", Label = "Home" },
+        new() { Key = "documents", Label = "Documents" },
+        new() { Key = "reports", Label = "Reports" }
+    ];
+
+    private Task BreadcrumbClicked(MetroBreadcrumbItem item)
+    {
+        currentBreadcrumb = item.Key;
+        status = $"Navigated to {item.Label}.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Items", "IReadOnlyList<MetroBreadcrumbItem>", "Path segments with Key and Label. (required)"),
+        new("CurrentKey", "string?", "Key of the current segment, styled and marked aria-current."),
+        new("ItemClick", "EventCallback<MetroBreadcrumbItem>", "Raised when a segment is clicked."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

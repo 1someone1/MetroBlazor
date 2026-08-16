@@ -1,0 +1,80 @@
+@page "/components/tile"
+
+<PageTitle>Tile — MetroBlazor</PageTitle>
+
+<DemoSection Title="Sizes" Description="Four canonical sizes with a shared touch, mouse, and keyboard interaction model. Small is a quarter of Medium (half width and height) and shows the icon only."
+             Code="@SizesCode">
+    <div class="showcase-tile-row">
+        <MetroTile Label="Photos" SubLabel="12 new items" Icon="image" AccentColor="#0078D7" Size="@MetroTileSize.Small" OnClick="TileClicked" />
+        <MetroTile Label="Videos" SubLabel="Recently added" Icon="video" AccentColor="#008272" Size="@MetroTileSize.Medium" OnClick="TileClicked" />
+        <MetroTile Label="Files" SubLabel="Browse storage" Icon="folder" AccentColor="#CA5010" Size="@MetroTileSize.Wide" Selected="true" OnClick="TileClicked" />
+        <MetroTile Label="Music" SubLabel="Playing now" Icon="music" AccentColor="#C239B3" Size="@MetroTileSize.Large" OnClick="TileClicked" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@tileStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Live tile" Description="Set Live and provide LiveContent to periodically flip the tile to alternate content. For plain text, LiveText pages through as many flips as the tile size needs, then returns to the default face."
+             Code="@LiveCode">
+    <div class="showcase-tile-row">
+        <MetroTile Label="Mail" Icon="mail" AccentColor="#0078D7" Size="@MetroTileSize.Wide" Live="true" LiveInterval="3000">
+            <LiveContent>
+                <span>3 unread messages</span>
+            </LiveContent>
+        </MetroTile>
+        <MetroTile Label="Weather" Icon="weather" AccentColor="#107C10" Size="@MetroTileSize.Wide" Live="true">
+            <LiveContent>
+                <span>22°, sunny all afternoon</span>
+            </LiveContent>
+        </MetroTile>
+        <MetroTile Label="Docs" Icon="book" AccentColor="#5C2D91" Size="@MetroTileSize.Wide" Live="true" LiveInterval="2500"
+                   LiveText="LiveText is split into as many pages as the tile can hold, so even long announcements page through completely before the tile returns to its default face." />
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string SizesCode = @"<MetroTile Label=""Photos"" SubLabel=""12 new items"" Icon=""image"" AccentColor=""#0078D7"" Size=""@MetroTileSize.Small"" OnClick=""TileClicked"" />
+<MetroTile Label=""Music"" SubLabel=""Playing now"" Icon=""music"" AccentColor=""#C239B3"" Size=""@MetroTileSize.Large"" OnClick=""TileClicked"" />";
+
+    private const string LiveCode = @"<MetroTile Label=""Mail"" Icon=""mail"" AccentColor=""#0078D7"" Size=""@MetroTileSize.Wide"" Live=""true"" LiveInterval=""3000"">
+    <LiveContent>
+        <span>3 unread messages</span>
+    </LiveContent>
+</MetroTile>";
+
+    private string tileStatus = "Select a tile to test its action state.";
+
+    private Task TileClicked(MouseEventArgs _)
+    {
+        tileStatus = "Tile activated. Try keyboard focus, Enter, Space, and touch input.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Label", "string", "Tile label, also used as the accessible name. (required)"),
+        new("SubLabel", "string?", "Secondary line shown under the label. Clips to two lines with an ellipsis; use LiveContent to reveal longer text."),
+        new("Icon", "string?", "Icon glyph rendered above the label."),
+        new("AccentColor", "string?", "Background accent color for the tile."),
+        new("Size", "MetroTileSize", "Small (icon-only, quarter of Medium), Medium, Wide, or Large. Defaults to Medium."),
+        new("Selected", "bool", "Shows the selected state (aria-pressed)."),
+        new("Disabled", "bool", "Disables pointer and keyboard activation."),
+        new("Live", "bool", "Enables periodic flipping through the live pages and back to the default face."),
+        new("LiveInterval", "int", "Flip interval in milliseconds. Defaults to 4000."),
+        new("LiveContent", "RenderFragment?", "First live page: alternate content shown while flipped."),
+        new("LiveText", "string?", "Plain text live content, split into as many pages as the tile size can hold — the tile keeps paging until the full text was shown, then returns to the default face."),
+        new("OnClick", "EventCallback<MouseEventArgs>", "Raised when the tile is activated."),
+        new("Draggable", "bool", "Marks the tile draggable for reorder scenarios."),
+        new("OnDragStart", "EventCallback<DragEventArgs>", "Raised when a drag begins."),
+        new("OnDragEnd", "EventCallback<DragEventArgs>", "Raised when a drag ends."),
+        new("ChildContent", "RenderFragment?", "Extra content rendered inside the tile."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

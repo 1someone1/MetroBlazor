@@ -1,0 +1,45 @@
+@page "/components/toggle"
+
+<PageTitle>Toggle — MetroBlazor</PageTitle>
+
+<DemoSection Title="Switch" Description="A squared switch that exposes its state through the switch role and aria-checked."
+             Code="@BasicCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroToggle Label="Enable sync" @bind-Checked="syncEnabled" />
+        <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Sync is @(syncEnabled ? "on" : "off").</MetroText>
+    </div>
+</DemoSection>
+
+<DemoSection Title="States" Description="Disabled toggles keep their visual state but no longer respond to pointer or keyboard input."
+             Code="@StatesCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroToggle Label="Disabled on" Checked="true" Disabled="true" />
+        <MetroToggle Label="Disabled off" Disabled="true" />
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string BasicCode = @"<MetroToggle Label=""Enable sync"" @bind-Checked=""syncEnabled"" />";
+
+    private const string StatesCode = @"<MetroToggle Label=""Disabled on"" Checked=""true"" Disabled=""true"" />
+<MetroToggle Label=""Disabled off"" Disabled=""true"" />";
+
+    private bool syncEnabled = true;
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Label", "string", "Visible label, also used as the accessible name of the switch. (required)"),
+        new("Checked", "bool", "Whether the switch is on. Combine with CheckedChanged or @bind-Checked."),
+        new("CheckedChanged", "EventCallback<bool>", "Invoked with the new state on activation; supports @bind-Checked."),
+        new("Disabled", "bool", "Disables interaction while keeping the current state visible."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

@@ -1,0 +1,60 @@
+@page "/components/command-bar"
+
+<PageTitle>Command bar — MetroBlazor</PageTitle>
+
+<DemoSection Title="Commands" Description="Flat command actions with optional icons and disabled states."
+             Code="@CommandsCode">
+    <MetroCommandBar Items="commands" CommandClick="CommandClicked" />
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@commandStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string CommandsCode = @"<MetroCommandBar Items=""commands"" CommandClick=""CommandClicked"" />
+
+@code {
+    private readonly IReadOnlyList<MetroCommandItem> commands =
+    [
+        new() { Key = ""new"", Label = ""New"", Icon = ""add"" },
+        new() { Key = ""save"", Label = ""Save"", Icon = ""save"" },
+        new() { Key = ""delete"", Label = ""Delete"", Icon = ""delete"", Disabled = true }
+    ];
+
+    private Task CommandClicked(MetroCommandItem command)
+    {
+        // command.Label identifies the invoked action
+        return Task.CompletedTask;
+    }
+}";
+
+    private string commandStatus = "Select a command.";
+
+    private readonly IReadOnlyList<MetroCommandItem> commands =
+    [
+        new() { Key = "new", Label = "New", Icon = "add" },
+        new() { Key = "save", Label = "Save", Icon = "save" },
+        new() { Key = "delete", Label = "Delete", Icon = "delete", Disabled = true }
+    ];
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Items", "IEnumerable<MetroCommandItem>", "Commands to render as toolbar buttons. (required)"),
+        new("CommandClick", "EventCallback<MetroCommandItem>", "Raised when an enabled command is invoked."),
+        new("AriaLabel", "string", "Accessible label for the toolbar. Defaults to \"Commands\"."),
+        new("ChildContent", "RenderFragment", "Extra content appended after the command buttons.")
+    ];
+
+    private Task CommandClicked(MetroCommandItem command)
+    {
+        commandStatus = $"{command.Label} invoked.";
+        return Task.CompletedTask;
+    }
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

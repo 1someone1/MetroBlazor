@@ -1,56 +1,85 @@
 @namespace MetroBlazor
 @implements IDisposable
 
-<section class="metro-tile-group @Class" @attributes="AdditionalAttributes">
+<section class="metro-tile-group @(ReadOnly ? "readonly" : null) @Class" @attributes="AdditionalAttributes">
     @if (!string.IsNullOrWhiteSpace(Title))
     {
         <header class="metro-tile-group-header"><MetroText TextStyle="MetroTextStyle.Subheader">@Title</MetroText></header>
     }
     @if (Items is not null)
     {
-        <div class="metro-tile-group-grid metro-tile-group-sortable">
-            @for (var index = 0; index < orderedItems.Count; index++)
-            {
-                var item = orderedItems[index];
-                <div class="metro-tile-group-item @(editMode ? "editing" : null) @(draggingIndex == index ? "dragging" : null)"
-                     draggable="false"
-                     @onpointerdown="@((PointerEventArgs _) => BeginLongPress(index))"
-                     @onpointerup="CancelLongPress"
-                     @onpointerleave="CancelLongPress"
-                     @oncontextmenu="@((MouseEventArgs _) => EnterEditMode())"
-                     @oncontextmenu:preventDefault="true"
-                     tabindex="-1"
-                     @ondragstart="@((DragEventArgs _) => BeginDrag(index))"
-                     @ondragend="EndDrag"
-                     @ondragover:preventDefault="true"
-                     @ondragenter:preventDefault="true"
-                     @ondrop="@((DragEventArgs _) => Drop(index))">
+        @if (ReadOnly)
+        {
+            <div class="metro-tile-group-grid @(Columns > 0 ? "columns" : null)" style="@GridStyle">
+                @foreach (var item in orderedItems)
+                {
                     <MetroTile Label="@item.Label"
                                SubLabel="@item.SubLabel"
                                Icon="@item.Icon"
                                AccentColor="@item.AccentColor"
                                Size="@item.Size"
-                               Draggable="@editMode"
-                               OnDragStart="@((DragEventArgs _) => BeginDrag(index))"
-                               OnDragEnd="EndDrag" />
-                    @if (editMode)
-                    {
-                        <button type="button" class="metro-tile-edit-control metro-tile-close" title="Remove tile" aria-label="Remove @item.Label tile" @onclick="@((MouseEventArgs _) => RemoveItem(item))" @onfocusout="OnControlFocusOut" @onclick:stopPropagation="true">×</button>
-                        <button type="button" class="metro-tile-edit-control metro-tile-size-button" title="Change tile size" aria-label="Change @item.Label tile size" @onclick="@((MouseEventArgs _) => CycleSize(item))" @onfocusout="OnControlFocusOut" @onclick:stopPropagation="true">↗</button>
-                    }
-                </div>
-            }
-        </div>
+                               OnClick="@((MouseEventArgs _) => SelectItem(item))" />
+                }
+            </div>
+        }
+        else
+        {
+            <div class="metro-tile-group-grid metro-tile-group-sortable @(Columns > 0 ? "columns" : null)" style="@GridStyle">
+                @for (var index = 0; index < orderedItems.Count; index++)
+                {
+                    var tileIndex = index;
+                    var item = orderedItems[tileIndex];
+                    <div class="metro-tile-group-item @(editMode ? "editing" : null) @(draggingIndex == tileIndex ? "dragging" : null)"
+                         draggable="false"
+                         @onpointerdown="@((PointerEventArgs _) => BeginLongPress(tileIndex))"
+                         @onpointerup="CancelLongPress"
+                         @onpointercancel="CancelLongPress"
+                         @onpointerleave="CancelLongPress"
+                         @oncontextmenu="@((MouseEventArgs _) => EnterEditMode())"
+                         @oncontextmenu:preventDefault="true"
+                         tabindex="-1"
+                         @ondragstart="@((DragEventArgs _) => BeginDrag(tileIndex))"
+                         @ondragend="EndDrag"
+                         @ondragover:preventDefault="true"
+                         @ondragenter:preventDefault="true"
+                         @ondrop="@((DragEventArgs _) => Drop(tileIndex))">
+                        <MetroTile Label="@item.Label"
+                                   SubLabel="@item.SubLabel"
+                                   Icon="@item.Icon"
+                                   AccentColor="@item.AccentColor"
+                                   Size="@item.Size"
+                                   Draggable="true"
+                                   OnDragStart="@((DragEventArgs _) => BeginDrag(tileIndex))"
+                                   OnDragEnd="EndDrag" />
+                        @if (editMode)
+                        {
+                            <button type="button" class="metro-tile-edit-control metro-tile-close" title="Remove tile" aria-label="Remove @item.Label tile" @onclick="@((MouseEventArgs _) => RemoveItem(item))" @onfocusout="OnControlFocusOut" @onclick:stopPropagation="true">×</button>
+                            <button type="button" class="metro-tile-edit-control metro-tile-size-button" title="Change tile size" aria-label="Change @item.Label tile size" @onclick="@((MouseEventArgs _) => CycleSize(item))" @onfocusout="OnControlFocusOut" @onclick:stopPropagation="true">↗</button>
+                        }
+                    </div>
+                }
+            </div>
+        }
     }
     else
     {
-        <div class="metro-tile-group-grid">@ChildContent</div>
+        <div class="metro-tile-group-grid @(Columns > 0 ? "columns" : null)" style="@GridStyle">@ChildContent</div>
     }
 </section>
 
 @code {
     [Parameter] public string? Title { get; set; }
     [Parameter] public IList<MetroAppItem>? Items { get; set; }
+
+    /// <summary>Read-only launcher mode: no edit mode, drag, or remove/resize controls;
+    /// tiles are clickable and raise ItemClick. Replaces the removed MetroAppGrid.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public EventCallback<MetroAppItem> ItemClick { get; set; }
+
+    /// <summary>Fixed column count for a launcher grid layout; 0 (default) keeps the
+    /// flexible wrap layout.</summary>
+    [Parameter] public int Columns { get; set; }
+
     [Parameter] public EventCallback<MetroAppItem> ItemMoved { get; set; }
     [Parameter] public EventCallback<MetroAppItem> ItemSizeChanged { get; set; }
     [Parameter] public EventCallback<MetroAppItem> ItemRemoved { get; set; }
@@ -65,12 +94,22 @@
     private bool editMode;
     private CancellationTokenSource? longPressCancellation;
 
+    private string? GridStyle => Columns > 0 ? $"--metro-tile-group-columns: {Columns};" : null;
+
     protected override void OnParametersSet()
     {
         if (!ReferenceEquals(sourceItems, Items))
         {
             sourceItems = Items;
             orderedItems = Items is null ? new List<MetroAppItem>() : Items.ToList();
+        }
+    }
+
+    private async Task SelectItem(MetroAppItem item)
+    {
+        if (ItemClick.HasDelegate)
+        {
+            await ItemClick.InvokeAsync(item);
         }
     }
 
@@ -121,17 +160,17 @@
 
     private void BeginDrag(int index)
     {
-        if (editMode)
-        {
-            draggingIndex = index;
-        }
+        // Direct drag works without edit mode (Windows 8.1 Update mouse behavior);
+        // edit mode only gates the remove/resize controls.
+        CancelLongPress();
+        draggingIndex = index;
     }
 
     private Task EndDrag(DragEventArgs _) { draggingIndex = -1; return Task.CompletedTask; }
 
     private async Task Drop(int targetIndex)
     {
-        if (!editMode || draggingIndex < 0 || draggingIndex >= orderedItems.Count || draggingIndex == targetIndex)
+        if (draggingIndex < 0 || draggingIndex >= orderedItems.Count || draggingIndex == targetIndex)
         {
             draggingIndex = -1;
             return;

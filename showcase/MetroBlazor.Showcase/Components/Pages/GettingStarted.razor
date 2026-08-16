@@ -1,0 +1,39 @@
+@page "/getting-started"
+
+<PageTitle>Getting started — MetroBlazor</PageTitle>
+
+<DemoSection Title="Install" Description="MetroBlazor ships as a NuGet package and works in any Blazor host.">
+    <pre class="docs-code-block"><code>dotnet add package MetroBlazor</code></pre>
+</DemoSection>
+
+<DemoSection Title="Register services" Description="MetroTheme builds on Fluent UI infrastructure for theming and accessibility.">
+    <pre class="docs-code-block"><code>// Program.cs
+builder.Services.AddFluentUIComponents();</code></pre>
+</DemoSection>
+
+<DemoSection Title="Import the namespace">
+    <pre class="docs-code-block"><code>@* _Imports.razor *@
+@@using MetroBlazor</code></pre>
+</DemoSection>
+
+<DemoSection Title="Wrap your app in MetroTheme" Description="MetroTheme loads the design tokens and cascades the theme state to every descendant.">
+    <pre class="docs-code-block"><code>&lt;MetroTheme&gt;
+    &lt;MetroTile Label="Photos" Icon="image" AccentColor="#0078D7" /&gt;
+&lt;/MetroTheme&gt;</code></pre>
+    <MetroTile Label="Photos" Icon="image" AccentColor="#0078D7" Size="MetroTileSize.Medium" />
+</DemoSection>
+
+<DemoSection Title="Build a shell with MetroLayout" Description="The same responsive shell this documentation uses: sidebar rail on desktop, push drawer on mobile.">
+    <pre class="docs-code-block"><code>&lt;MetroLayout Brand="MY APP" @@bind-SidebarCollapsed="collapsed"&gt;
+    &lt;SidebarContent&gt;
+        &lt;MetroNavigation Items="items" SelectedKey="selected" /&gt;
+    &lt;/SidebarContent&gt;
+    &lt;ChildContent&gt;
+        Main content scrolls independently on desktop and mobile.
+    &lt;/ChildContent&gt;
+&lt;/MetroLayout&gt;</code></pre>
+    <MetroText TextStyle="MetroTextStyle.Body">
+        Continue to the <MetroText TextStyle="MetroTextStyle.Link" Href="/components/layout">Layout</MetroText>
+        page for the full parameter reference, or browse components from the navigation.
+    </MetroText>
+</DemoSection>

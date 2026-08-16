@@ -12,29 +12,26 @@
         @ondragstart="HandleDragStart"
         @ondragend="HandleDragEnd"
         @attributes="AdditionalAttributes">
-    @if (Live && LiveContent is not null && showingLive)
+    @if (showingPage >= 0 && livePages.Count > 0)
     {
-        <span class="metro-tile-live-content">@LiveContent</span>
+        @* @key forces a fresh element per page so the entrance animation replays on every flip. *@
+        <span class="metro-tile-live-content" @key="showingPage">@livePages[showingPage]</span>
+    }
+    else if (Live && livePages.Count > 0)
+    {
+        <span class="metro-tile-front-content" @key="FrontPageKey">
+            @FrontContent
+        </span>
     }
     else
     {
-        @if (!string.IsNullOrEmpty(Icon))
-        {
-            <span class="metro-tile-icon" aria-hidden="true">@Icon</span>
-        }
-        <span class="metro-tile-label">@Label</span>
-        @if (!string.IsNullOrEmpty(SubLabel))
-        {
-            <span class="metro-tile-sublabel">@SubLabel</span>
-        }
-        @if (ChildContent is not null)
-        {
-            @ChildContent
-        }
+        @FrontContent
     }
 </button>
 
 @code {
+    private const int FrontPageKey = -1;
+
     [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
     [Parameter] public string? SubLabel { get; set; }
     [Parameter] public string? Icon { get; set; }
@@ -48,6 +45,7 @@
     [Parameter] public bool Live { get; set; }
     [Parameter] public int LiveInterval { get; set; } = 4000;
     [Parameter] public RenderFragment? LiveContent { get; set; }
+    [Parameter] public string? LiveText { get; set; }
     [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }
@@ -67,27 +65,108 @@
         : $"--metro-tile-accent: {AccentColor};";
 
     private Timer? liveTimer;
-    private bool showingLive;
+    private int showingPage = FrontPageKey;
+    private IReadOnlyList<RenderFragment> livePages = [];
+
+    // The default tile face, factored out so live tiles can wrap it in an
+    // animated container without duplicating the markup.
+    private RenderFragment FrontContent => @<text>
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            @if (MetroIconCatalog.ResolvePath(Icon) is not null)
+            {
+                <span class="metro-tile-icon" aria-hidden="true"><MetroIcon Name="@Icon" Size="MetroIconSize.Medium" /></span>
+            }
+            else
+            {
+                <span class="metro-tile-icon" aria-hidden="true">@Icon</span>
+            }
+        }
+        <span class="metro-tile-label">@Label</span>
+        @if (!string.IsNullOrEmpty(SubLabel))
+        {
+            <span class="metro-tile-sublabel">@SubLabel</span>
+        }
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+    </text>;
 
     protected override void OnParametersSet()
     {
-        if (Live && LiveContent is not null && liveTimer is null)
+        livePages = BuildLivePages();
+        if (showingPage >= livePages.Count)
         {
-            liveTimer = new Timer(_ => ToggleLiveContent(), null, LiveInterval, LiveInterval);
+            showingPage = FrontPageKey;
         }
-        else if ((!Live || LiveContent is null) && liveTimer is not null)
+
+        if (Live && livePages.Count > 0 && liveTimer is null)
+        {
+            liveTimer = new Timer(_ => AdvanceLiveContent(), null, LiveInterval, LiveInterval);
+        }
+        else if ((!Live || livePages.Count == 0) && liveTimer is not null)
         {
             liveTimer.Dispose();
             liveTimer = null;
-            showingLive = false;
+            showingPage = FrontPageKey;
         }
     }
 
-    private void ToggleLiveContent()
+    // LiveContent counts as the first page; LiveText is split into as many
+    // pages as the tile size can hold. The cycle is front → page 1..n → front.
+    private IReadOnlyList<RenderFragment> BuildLivePages()
+    {
+        var pages = new List<RenderFragment>();
+        if (LiveContent is not null)
+        {
+            pages.Add(LiveContent);
+        }
+        if (!string.IsNullOrWhiteSpace(LiveText))
+        {
+            foreach (var chunk in SplitLiveText(LiveText, LivePageCapacity))
+            {
+                var text = chunk;
+                pages.Add(builder => builder.AddContent(0, text));
+            }
+        }
+        return pages;
+    }
+
+    // Approximate characters of 13px live text that fit one page at each size.
+    private int LivePageCapacity => Size switch
+    {
+        MetroTileSize.Small => 40,
+        MetroTileSize.Medium => 70,
+        MetroTileSize.Wide => 160,
+        MetroTileSize.Large => 320,
+        _ => 70,
+    };
+
+    internal static IEnumerable<string> SplitLiveText(string text, int capacity)
+    {
+        var remaining = text.Trim();
+        while (remaining.Length > capacity)
+        {
+            var breakAt = remaining[..capacity].LastIndexOf(' ');
+            if (breakAt <= 0)
+            {
+                breakAt = capacity;
+            }
+            yield return remaining[..breakAt].Trim();
+            remaining = remaining[breakAt..].TrimStart();
+        }
+        if (remaining.Length > 0)
+        {
+            yield return remaining;
+        }
+    }
+
+    private void AdvanceLiveContent()
     {
         _ = InvokeAsync(() =>
         {
-            showingLive = !showingLive;
+            showingPage = showingPage + 1 >= livePages.Count ? FrontPageKey : showingPage + 1;
             StateHasChanged();
         });
     }

@@ -1,0 +1,47 @@
+@page "/components/transition"
+
+<PageTitle>Page transition — MetroBlazor</PageTitle>
+
+<DemoSection Title="Key-driven transition" Description="MetroPageTransition replays its entrance animation whenever TransitionKey changes — bind the key to a route or view identifier during app navigation. Application routing itself remains outside the component library."
+             Code="@TransitionCode">
+    <MetroPageTransition TransitionKey="@transitionKey">
+        <MetroSurface><MetroText TextStyle="MetroTextStyle.Subheader">Transitioning surface</MetroText></MetroSurface>
+    </MetroPageTransition>
+    <MetroButton OnClick="ChangeTransition">Change content</MetroButton>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string TransitionCode = @"<MetroPageTransition TransitionKey=""@transitionKey"">
+    <MetroSurface>Transitioning surface</MetroSurface>
+</MetroPageTransition>
+
+@code {
+    private int transitionKey;
+    private void ChangeTransition() => transitionKey++;
+}";
+
+    private int transitionKey;
+    private string status = "Press Change content to replay the transition.";
+
+    private Task ChangeTransition(MouseEventArgs _)
+    {
+        transitionKey++;
+        status = $"Transition replayed with key {transitionKey}.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("TransitionKey", "object", "Key applied to the wrapper element; changing it replays the entrance transition. (required)"),
+        new("ChildContent", "RenderFragment", "Content that animates in. (required)"),
+    ];
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

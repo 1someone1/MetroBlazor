@@ -1,0 +1,67 @@
+@page "/components/navigation"
+
+<PageTitle>Navigation — MetroBlazor</PageTitle>
+
+<DemoSection Title="Grouped items" Description="Items are grouped by their Group field; a group header carries an outline icon via GroupIcons. With CollapsibleGroups, groups start collapsed (the selected item's group stays open) and headers act as an accordion: expanding a group closes the others and opens its first item, clicking the open group collapses it. Items with Children expand in place."
+             Code="@GroupedCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroNavigation Items="navigationItems" GroupIcons="groupIcons" CollapsibleGroups @bind-SelectedKey="selectedKey" ItemClick="NavigationClicked" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string GroupedCode = @"<MetroNavigation Items=""items"" GroupIcons=""groupIcons"" CollapsibleGroups @bind-SelectedKey=""selected"" ItemClick=""OnItemClick"" />";
+
+    private string? selectedKey = "overview";
+    private string status = "Select a navigation item.";
+
+    private readonly IReadOnlyDictionary<string, string> groupIcons = new Dictionary<string, string>
+    {
+        ["Getting started"] = "rocket",
+        ["Components"] = "apps",
+        ["System"] = "board",
+    };
+
+    private readonly IReadOnlyList<MetroNavigationItem> navigationItems =
+    [
+        new() { Key = "overview", Label = "Overview", Icon = "home", Group = "Getting started" },
+        new() { Key = "tile", Label = "Tile", Icon = "tile", Group = "Components" },
+        new() { Key = "button", Label = "Button", Icon = "add", Group = "Components" },
+        new()
+        {
+            Key = "settings", Label = "Settings", Icon = "settings", Group = "System",
+            Children =
+            [
+                new MetroNavigationItem { Key = "settings-general", Label = "General" },
+                new MetroNavigationItem { Key = "settings-sync", Label = "Sync" }
+            ]
+        }
+    ];
+
+    private Task NavigationClicked(MetroNavigationItem item)
+    {
+        status = $"{item.Label} selected.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Items", "IEnumerable<MetroNavigationItem>", "Navigation entries with Key, Label, Icon, Group, and optional Children. (required)"),
+        new("GroupIcons", "IReadOnlyDictionary<string, string>?", "Maps a Group label to a MetroIcon name for the group header; headers render the outline variant."),
+        new("CollapsibleGroups", "bool", "Groups start collapsed (the selected item's group stays open); expanding a group closes the others and activates its first item, clicking the open group collapses it."),
+        new("SelectedKey", "string?", "Key of the selected item. Supports @bind-SelectedKey."),
+        new("SelectedKeyChanged", "EventCallback<string>", "Raised when an item is selected."),
+        new("ItemClick", "EventCallback<MetroNavigationItem>", "Raised with the clicked item, including expander parents."),
+        new("AriaLabel", "string", "Accessible label for the nav element. Defaults to Navigation."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

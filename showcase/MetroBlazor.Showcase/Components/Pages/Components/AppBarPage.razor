@@ -1,0 +1,70 @@
+@page "/components/app-bar"
+
+<PageTitle>App bar — MetroBlazor</PageTitle>
+
+<DemoSection Title="Reveal and hide" Description="A bottom command surface that reveals and hides from the lower edge."
+             Code="@AppBarCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroButton OnClick="ToggleAppBar">@(appBarOpen ? "Close app bar" : "Open app bar")</MetroButton>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@appBarStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+<MetroAppBar @bind-Open="appBarOpen">
+    <MetroButton Quiet OnClick="CloseAppBar">Close</MetroButton>
+    <MetroButton Quiet OnClick="ShowMore">More</MetroButton>
+</MetroAppBar>
+
+@code {
+    private const string AppBarCode = @"<MetroButton OnClick=""ToggleAppBar"">Open app bar</MetroButton>
+
+<MetroAppBar @bind-Open=""appBarOpen"">
+    <MetroButton Quiet OnClick=""CloseAppBar"">Close</MetroButton>
+</MetroAppBar>
+
+@code {
+    private bool appBarOpen;
+
+    private void ToggleAppBar() => appBarOpen = !appBarOpen;
+    private void CloseAppBar() => appBarOpen = false;
+}";
+
+    private bool appBarOpen;
+    private string appBarStatus = "App bar is closed.";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Open", "bool", "Controls whether the app bar is revealed. Supports @bind-Open."),
+        new("OpenChanged", "EventCallback<bool>", "Raised when the built-in close button hides the bar."),
+        new("ChildContent", "RenderFragment", "Command content laid out along the bottom edge.")
+    ];
+
+    private Task ToggleAppBar(MouseEventArgs _)
+    {
+        appBarOpen = !appBarOpen;
+        appBarStatus = appBarOpen ? "App bar is open." : "App bar is closed.";
+        return Task.CompletedTask;
+    }
+
+    private Task CloseAppBar(MouseEventArgs _)
+    {
+        appBarOpen = false;
+        appBarStatus = "App bar is closed.";
+        return Task.CompletedTask;
+    }
+
+    private Task ShowMore(MouseEventArgs _)
+    {
+        appBarStatus = "More invoked from the app bar.";
+        return Task.CompletedTask;
+    }
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

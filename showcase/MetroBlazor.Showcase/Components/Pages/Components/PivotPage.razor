@@ -1,0 +1,46 @@
+@page "/components/pivot"
+
+<PageTitle>Pivot — MetroBlazor</PageTitle>
+
+<DemoSection Title="Sections" Description="Horizontal section headers with an active underline; the tab list scrolls on overflow. Content below the tabs is a single tabpanel."
+             Code="@SectionsCode">
+    <MetroPivot Items="pivotItems" @bind-SelectedKey="pivotValue">
+        <MetroText TextStyle="MetroTextStyle.Body">Current pivot: @pivotValue</MetroText>
+    </MetroPivot>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string SectionsCode = @"<MetroPivot Items=""items"" @bind-SelectedKey=""selected"">
+    <MetroText TextStyle=""MetroTextStyle.Body"">Current pivot: @selected</MetroText>
+</MetroPivot>";
+
+    private string? pivotValue = "all";
+
+    private string status => $"The {pivotValue} section is active.";
+
+    private readonly IReadOnlyList<MetroPivotItem> pivotItems =
+    [
+        new() { Key = "all", Header = "All" },
+        new() { Key = "recent", Header = "Recent" },
+        new() { Key = "favorites", Header = "Favorites" }
+    ];
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Items", "IEnumerable<MetroPivotItem>", "Pivot headers with Key and Header text. (required)"),
+        new("SelectedKey", "string?", "Key of the active pivot. Supports @bind-SelectedKey."),
+        new("SelectedKeyChanged", "EventCallback<string>", "Raised when a pivot tab is selected."),
+        new("AriaLabel", "string", "Accessible label for the tab list. Defaults to Sections."),
+        new("ChildContent", "RenderFragment?", "Content rendered inside the tabpanel."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

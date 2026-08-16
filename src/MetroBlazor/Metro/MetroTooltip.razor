@@ -1,0 +1,19 @@
+@namespace MetroBlazor
+
+<span class="metro-tooltip-host metro-tooltip-@Placement @Class" @attributes="AdditionalAttributes">
+    @ChildContent
+    @if (!string.IsNullOrWhiteSpace(Text))
+    {
+        <span class="metro-tooltip" role="tooltip" id="@TooltipId">@Text</span>
+    }
+</span>
+
+@code {
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public string Placement { get; set; } = "top";
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string TooltipId { get; } = $"metro-tooltip-{Guid.NewGuid():N}";
+}

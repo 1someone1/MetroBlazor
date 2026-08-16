@@ -1,0 +1,49 @@
+@page "/components/input"
+
+<PageTitle>Input — MetroBlazor</PageTitle>
+
+<DemoSection Title="Text input" Description="The classic Metro underline field with a clear focus transition."
+             Code="@BasicCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroInput Id="display-name" Label="Display name" Placeholder="Type a name" @bind-Value="displayName" />
+        <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Value: @displayName</MetroText>
+    </div>
+</DemoSection>
+
+<DemoSection Title="States" Description="Disabled and read-only fields keep the underline treatment but drop the focus transition."
+             Code="@StatesCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroInput Label="Disabled" Value="Not editable" Disabled="true" />
+        <MetroInput Label="Read-only" Value="Read only value" ReadOnly="true" />
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string BasicCode = @"<MetroInput Label=""Display name"" Placeholder=""Type a name"" @bind-Value=""displayName"" />";
+
+    private const string StatesCode = @"<MetroInput Label=""Disabled"" Value=""Not editable"" Disabled=""true"" />
+<MetroInput Label=""Read-only"" Value=""Read only value"" ReadOnly=""true"" />";
+
+    private string displayName = "Alex";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Label", "string?", "Field label rendered above the input and associated via for/id."),
+        new("Value", "string?", "Current text. Combine with ValueChanged or @bind-Value."),
+        new("ValueChanged", "EventCallback<string?>", "Invoked on every input event; supports @bind-Value."),
+        new("Placeholder", "string?", "Placeholder text shown when the field is empty."),
+        new("Id", "string?", "Explicit input id used for label association; auto-generated when omitted."),
+        new("Type", "string", "HTML input type. Defaults to \"text\"."),
+        new("Disabled", "bool", "Disables editing and dims the field."),
+        new("ReadOnly", "bool", "Keeps the value focusable but not editable."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

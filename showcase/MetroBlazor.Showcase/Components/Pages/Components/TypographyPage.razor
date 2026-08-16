@@ -1,0 +1,39 @@
+@page "/components/typography"
+
+<PageTitle>Typography — MetroBlazor</PageTitle>
+
+<DemoSection Title="Type ramp" Description="The full MetroText hierarchy on one surface, from the light display title down to the restrained caption and accent link."
+             Code="@RampCode">
+    <div class="showcase-typography-sample">
+        <MetroText TextStyle="MetroTextStyle.Display">Display title</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Header">Section header</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Subheader">Subheader for a grouped surface</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Body">Body copy is open, left aligned, and easy to scan on a touch-first surface.</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Label">Control label</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Caption">Caption and secondary metadata</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Link" Href="#">Accent link</MetroText>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters" Description="TextStyle also selects the rendered element: h1 for Display, h2 for Header, h3 for Subheader, p for Body, span for Label, small for Caption, and a for Link.">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string RampCode = @"<MetroText TextStyle=""MetroTextStyle.Display"">Display title</MetroText>
+<MetroText TextStyle=""MetroTextStyle.Header"">Section header</MetroText>
+<MetroText TextStyle=""MetroTextStyle.Body"">Body copy</MetroText>
+<MetroText TextStyle=""MetroTextStyle.Caption"">Caption</MetroText>
+<MetroText TextStyle=""MetroTextStyle.Link"" Href=""#"">Accent link</MetroText>";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("TextStyle", "MetroTextStyle", "Display, Header, Subheader, Body (default), Caption, Link, or Label."),
+        new("ChildContent", "RenderFragment", "Text content. (required)"),
+        new("Href", "string", "Link target; only used with the Link style. Defaults to #."),
+    ];
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

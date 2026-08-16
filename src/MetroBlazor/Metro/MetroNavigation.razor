@@ -3,40 +3,61 @@
 <nav class="metro-navigation-shell @Class" aria-label="@AriaLabel" @attributes="AdditionalAttributes">
     @foreach (var group in GroupedItems)
     {
-        @if (!string.IsNullOrWhiteSpace(group.Key))
-        {
-            <div class="metro-navigation-group">@group.Key</div>
-        }
-
-        @foreach (var item in group)
-        {
-            <button type="button" class="metro-navigation-item @(item.Key == SelectedKey ? "selected" : null)" aria-current="@(item.Key == SelectedKey ? "page" : null)" @onclick="@(() => SelectItem(item))">
-                @if (!string.IsNullOrWhiteSpace(item.Icon))
-                {
-                    <MetroIcon Name="@item.Icon" Size="MetroIconSize.Small" />
-                }
-                <span>@item.Label</span>
-                @if (item.Children is { Count: > 0 })
-                {
-                    <span class="metro-navigation-expander">@(expandedKeys.Contains(item.Key) ? "−" : "+")</span>
-                }
-            </button>
-            @if (expandedKeys.Contains(item.Key) && item.Children is not null)
+        var groupKey = group.Key;
+        var hasHeader = !string.IsNullOrWhiteSpace(groupKey);
+        var groupCollapsed = hasHeader && collapsedGroups.Contains(groupKey!);
+        <div class="metro-navigation-section">
+            @if (hasHeader)
             {
-                <div class="metro-navigation-children">
-                    @foreach (var child in item.Children)
+                <button type="button" class="metro-navigation-group" title="@groupKey"
+                        aria-expanded="@(CollapsibleGroups ? (groupCollapsed ? "false" : "true") : null)"
+                        @onclick="@(() => GroupClicked(groupKey!, group.First()))">
+                    @if (ResolveGroupIcon(groupKey!) is { } groupIcon)
                     {
-                        <button type="button" class="metro-navigation-item child @(child.Key == SelectedKey ? "selected" : null)" @onclick="@(() => SelectItem(child))">
-                            @if (!string.IsNullOrWhiteSpace(child.Icon))
+                        <MetroIcon Name="@groupIcon" Size="MetroIconSize.Small" Variant="MetroIconVariant.Outline" />
+                    }
+                    <span>@groupKey</span>
+                    @if (CollapsibleGroups)
+                    {
+                        <span class="metro-navigation-expander">@(groupCollapsed ? "+" : "−")</span>
+                    }
+                </button>
+            }
+            @if (!groupCollapsed)
+            {
+                <div class="metro-navigation-items">
+                    @foreach (var item in group)
+                    {
+                        <button type="button" class="metro-navigation-item @(item.Key == SelectedKey ? "selected" : null)" aria-current="@(item.Key == SelectedKey ? "page" : null)" @onclick="@(() => SelectItem(item))">
+                            @if (!string.IsNullOrWhiteSpace(item.Icon))
                             {
-                                <MetroIcon Name="@child.Icon" Size="MetroIconSize.Small" />
+                                <MetroIcon Name="@item.Icon" Size="MetroIconSize.Small" />
                             }
-                            <span>@child.Label</span>
+                            <span>@item.Label</span>
+                            @if (item.Children is { Count: > 0 })
+                            {
+                                <span class="metro-navigation-expander">@(expandedKeys.Contains(item.Key) ? "−" : "+")</span>
+                            }
                         </button>
+                        @if (expandedKeys.Contains(item.Key) && item.Children is not null)
+                        {
+                            <div class="metro-navigation-children">
+                                @foreach (var child in item.Children)
+                                {
+                                    <button type="button" class="metro-navigation-item child @(child.Key == SelectedKey ? "selected" : null)" @onclick="@(() => SelectItem(child))">
+                                        @if (!string.IsNullOrWhiteSpace(child.Icon))
+                                        {
+                                            <MetroIcon Name="@child.Icon" Size="MetroIconSize.Small" />
+                                        }
+                                        <span>@child.Label</span>
+                                    </button>
+                                }
+                            </div>
+                        }
                     }
                 </div>
             }
-        }
+        </div>
     }
 </nav>
 
@@ -45,12 +66,89 @@
     [Parameter] public string? SelectedKey { get; set; }
     [Parameter] public EventCallback<string> SelectedKeyChanged { get; set; }
     [Parameter] public EventCallback<MetroNavigationItem> ItemClick { get; set; }
+    [Parameter] public IReadOnlyDictionary<string, string>? GroupIcons { get; set; }
+    /// <summary>
+    /// When true, groups start collapsed (the group holding SelectedKey stays open)
+    /// and clicking a group header toggles its items instead of activating the first item.
+    /// </summary>
+    [Parameter] public bool CollapsibleGroups { get; set; }
     [Parameter] public string AriaLabel { get; set; } = "Navigation";
     [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
     private readonly HashSet<string> expandedKeys = new();
+    private readonly HashSet<string> collapsedGroups = new(StringComparer.Ordinal);
+    private bool collapseInitialized;
+    private string? lastSelectedKey;
     private IEnumerable<IGrouping<string?, MetroNavigationItem>> GroupedItems => Items.GroupBy(item => item.Group);
+
+    protected override void OnParametersSet()
+    {
+        if (CollapsibleGroups && !collapseInitialized)
+        {
+            collapseInitialized = true;
+            foreach (var key in GroupedItems.Select(group => group.Key))
+            {
+                if (!string.IsNullOrEmpty(key))
+                {
+                    collapsedGroups.Add(key);
+                }
+            }
+        }
+
+        if (SelectedKey != lastSelectedKey)
+        {
+            lastSelectedKey = SelectedKey;
+            var selectedGroup = Items.FirstOrDefault(item => item.Key == SelectedKey)?.Group;
+            if (CollapsibleGroups)
+            {
+                CollapseAllExcept(selectedGroup);
+            }
+            else if (selectedGroup is not null)
+            {
+                collapsedGroups.Remove(selectedGroup);
+            }
+        }
+    }
+
+    private string? ResolveGroupIcon(string group)
+        => GroupIcons is not null && GroupIcons.TryGetValue(group, out var icon) ? icon : null;
+
+    private async Task GroupClicked(string group, MetroNavigationItem firstItem)
+    {
+        if (CollapsibleGroups)
+        {
+            if (collapsedGroups.Remove(group))
+            {
+                // Expanding is an accordion: every other group closes, and the
+                // group opens straight into its first item.
+                CollapseAllExcept(group);
+                await SelectItem(firstItem);
+            }
+            else
+            {
+                collapsedGroups.Add(group);
+            }
+            return;
+        }
+
+        await SelectItem(firstItem);
+    }
+
+    private void CollapseAllExcept(string? openGroup)
+    {
+        foreach (var key in GroupedItems.Select(group => group.Key))
+        {
+            if (!string.IsNullOrEmpty(key) && !string.Equals(key, openGroup, StringComparison.Ordinal))
+            {
+                collapsedGroups.Add(key);
+            }
+        }
+        if (openGroup is not null)
+        {
+            collapsedGroups.Remove(openGroup);
+        }
+    }
 
     private async Task SelectItem(MetroNavigationItem item)
     {
@@ -65,5 +163,4 @@
         await SelectedKeyChanged.InvokeAsync(item.Key);
         await ItemClick.InvokeAsync(item);
     }
-
 }

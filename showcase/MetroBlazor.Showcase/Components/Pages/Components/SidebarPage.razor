@@ -1,0 +1,49 @@
+@page "/components/sidebar"
+
+<PageTitle>Sidebar — MetroBlazor</PageTitle>
+
+<DemoSection Title="Collapsible rail" Description="The hamburger toggle collapses the rail to icons only. MetroLayout composes this component for you; embed it directly for custom shells."
+             Code="@CollapsedCode">
+    <div class="showcase-control-card showcase-sidebar-preview">
+        <MetroSidebar Brand="METROBLAZOR" @bind-Collapsed="collapsed">
+            <MetroNavigation Items="navigationItems" @bind-SelectedKey="selectedKey" />
+        </MetroSidebar>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string CollapsedCode = @"<MetroSidebar Brand=""METROBLAZOR"" @bind-Collapsed=""collapsed"">
+    <MetroNavigation Items=""items"" @bind-SelectedKey=""selected"" />
+</MetroSidebar>";
+
+    private bool collapsed = true;
+    private string? selectedKey = "home";
+
+    private string status => collapsed ? "Sidebar is collapsed to the icon rail." : "Sidebar is expanded.";
+
+    private readonly IReadOnlyList<MetroNavigationItem> navigationItems =
+    [
+        new() { Key = "home", Label = "Home", Icon = "home", Group = "Main" },
+        new() { Key = "files", Label = "Files", Icon = "folder", Group = "Main" },
+        new() { Key = "settings", Label = "Settings", Icon = "settings", Group = "System" }
+    ];
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Collapsed", "bool", "Whether the rail is collapsed to icons. Supports @bind-Collapsed."),
+        new("CollapsedChanged", "EventCallback<bool>", "Raised by the hamburger toggle."),
+        new("Brand", "string", "Brand heading shown when expanded. Defaults to METROBLAZOR."),
+        new("BrandIcon", "RenderFragment?", "Optional icon rendered before the brand heading."),
+        new("ChildContent", "RenderFragment", "Sidebar body, typically a MetroNavigation. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

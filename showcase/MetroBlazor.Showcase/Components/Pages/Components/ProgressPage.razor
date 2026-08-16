@@ -1,0 +1,63 @@
+@page "/components/progress"
+
+<PageTitle>Progress — MetroBlazor</PageTitle>
+
+<DemoSection Title="Determinate" Description="Segmented blocks fill as Value moves from 0 to 100."
+             Code="@DeterminateCode">
+    <div class="showcase-control-card">
+        <div class="showcase-card-title"><MetroText TextStyle="MetroTextStyle.Subheader">Upload progress</MetroText><strong>@progressValue%</strong></div>
+        <MetroProgress Value="@progressValue" AriaLabel="Upload progress" />
+        <div class="showcase-inline-controls">
+            <MetroButton Quiet OnClick="DecreaseProgress">- 10</MetroButton>
+            <MetroButton Quiet OnClick="IncreaseProgress">+ 10</MetroButton>
+        </div>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Indeterminate" Description="Staggered square-block motion for work with no known total."
+             Code="@IndeterminateCode">
+    <div class="showcase-control-card">
+        <div class="showcase-card-title"><MetroText TextStyle="MetroTextStyle.Subheader">Syncing library</MetroText><MetroBadge>Working</MetroBadge></div>
+        <MetroProgress IsIndeterminate="true" AriaLabel="Loading" />
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string DeterminateCode = @"<MetroProgress Value=""60"" Segments=""10"" AriaLabel=""Upload progress"" />";
+    private const string IndeterminateCode = @"<MetroProgress IsIndeterminate=""true"" AriaLabel=""Loading"" />";
+
+    private int progressValue = 60;
+    private string status = "Use the buttons to change the upload progress.";
+
+    private Task IncreaseProgress(MouseEventArgs _)
+    {
+        progressValue = Math.Min(progressValue + 10, 100);
+        status = $"Upload progress set to {progressValue}%.";
+        return Task.CompletedTask;
+    }
+
+    private Task DecreaseProgress(MouseEventArgs _)
+    {
+        progressValue = Math.Max(progressValue - 10, 0);
+        status = $"Upload progress set to {progressValue}%.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Value", "double", "Current progress from 0 to 100; values are clamped."),
+        new("Segments", "int", "Number of determinate blocks. Defaults to 10."),
+        new("IsIndeterminate", "bool", "Switches to the staggered square-block animation."),
+        new("AriaLabel", "string", "Accessible label for the progressbar role. Defaults to \"Progress\"."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

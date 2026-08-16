@@ -1,0 +1,47 @@
+@page "/components/frame"
+
+<PageTitle>App frame — MetroBlazor</PageTitle>
+
+<DemoSection Title="Deprecated" Description="MetroAppFrame is obsolete and will be removed in a future release. Use MetroLayout with HeaderTemplate instead — it provides the same header and content regions plus the responsive sidebar shell."
+             Code="@FrameCode">
+    <MetroAppFrame>
+        <Header><MetroText TextStyle="MetroTextStyle.Subheader">Files</MetroText></Header>
+        <ChildContent><MetroSurface><MetroText TextStyle="MetroTextStyle.Body">Application content surface</MetroText></MetroSurface></ChildContent>
+    </MetroAppFrame>
+</DemoSection>
+
+<DemoSection Title="Migration" Description="The MetroLayout equivalent of the frame above."
+             Code="@MigrationCode">
+    <MetroText TextStyle="MetroTextStyle.Body">Move the Header fragment into HeaderTemplate and keep the content as ChildContent. Add SidebarContent when the app needs navigation.</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string FrameCode = @"<MetroAppFrame>
+    <Header><MetroText TextStyle=""MetroTextStyle.Subheader"">Files</MetroText></Header>
+    <ChildContent>
+        <MetroSurface><MetroText TextStyle=""MetroTextStyle.Body"">Application content surface</MetroText></MetroSurface>
+    </ChildContent>
+</MetroAppFrame>";
+
+    private const string MigrationCode = @"<MetroLayout Brand=""METROBLAZOR"">
+    <HeaderTemplate><MetroText TextStyle=""MetroTextStyle.Subheader"">Files</MetroText></HeaderTemplate>
+    <ChildContent>
+        <MetroSurface><MetroText TextStyle=""MetroTextStyle.Body"">Application content surface</MetroText></MetroSurface>
+    </ChildContent>
+</MetroLayout>";
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Header", "RenderFragment?", "Optional header region rendered above the content."),
+        new("ChildContent", "RenderFragment", "Frame content region. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

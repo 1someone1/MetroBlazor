@@ -1,0 +1,59 @@
+@page "/components/layout"
+
+<PageTitle>Layout — MetroBlazor</PageTitle>
+
+<DemoSection Title="Shell composition" Description="MetroLayout is the responsive app shell: a persistent sidebar rail beside the main region on desktop, and a push drawer with a scrim on mobile. This docs site itself is composed with MetroLayout — the sidebar and header around this page are live instances."
+             Code="@ShellCode">
+    <MetroText TextStyle="MetroTextStyle.Body">Provide SidebarContent (typically a MetroNavigation), an optional HeaderTemplate, and the page body as ChildContent. SidebarCollapsed supports two-way binding so the shell can collapse itself from the scrim or the hamburger toggle.</MetroText>
+</DemoSection>
+
+<DemoSection Title="Sidebar preview" Description="The sidebar region MetroLayout renders for you, shown standalone. See the Sidebar page for the full control.">
+    <div class="showcase-control-card showcase-sidebar-preview">
+        <MetroSidebar Brand="METROBLAZOR" Collapsed="true">
+            <MetroNavigation Items="navigationItems" SelectedKey="@selectedKey" />
+        </MetroSidebar>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string ShellCode = @"<MetroLayout Brand=""METROBLAZOR"" @bind-SidebarCollapsed=""collapsed"">
+    <SidebarContent>
+        <MetroNavigation Items=""items"" @bind-SelectedKey=""selected"" />
+    </SidebarContent>
+    <HeaderTemplate>
+        <MetroText TextStyle=""MetroTextStyle.Display"">Files</MetroText>
+    </HeaderTemplate>
+    <ChildContent>
+        @Body
+    </ChildContent>
+</MetroLayout>";
+
+    private string? selectedKey = "home";
+
+    private readonly IReadOnlyList<MetroNavigationItem> navigationItems =
+    [
+        new() { Key = "home", Label = "Home", Icon = "home" },
+        new() { Key = "files", Label = "Files", Icon = "folder" },
+        new() { Key = "settings", Label = "Settings", Icon = "settings" }
+    ];
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Brand", "string", "Brand heading passed to the composed MetroSidebar. Defaults to METROBLAZOR."),
+        new("SidebarCollapsed", "bool", "Whether the sidebar is collapsed. Supports @bind-SidebarCollapsed."),
+        new("SidebarCollapsedChanged", "EventCallback<bool>", "Raised by the hamburger toggle and the mobile scrim."),
+        new("SidebarContent", "RenderFragment?", "Sidebar body, typically a MetroNavigation. Omit for a content-only layout."),
+        new("BrandIcon", "RenderFragment?", "Optional icon rendered before the brand heading."),
+        new("HeaderTemplate", "RenderFragment?", "Optional header rendered above the main content."),
+        new("ChildContent", "RenderFragment", "Main region content. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

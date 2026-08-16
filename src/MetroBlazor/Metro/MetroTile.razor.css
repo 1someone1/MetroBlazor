@@ -10,6 +10,7 @@
     border: 0;
     border-left: 4px solid transparent;
     border-radius: 0;
+    overflow: hidden;
     color: #fff;
     background: var(--metro-tile-accent, var(--metro-accent));
     font: inherit;
@@ -44,10 +45,14 @@
     opacity: 0.45;
 }
 
-.metro-tile-small { min-width: 60px; min-height: 60px; }
-.metro-tile-medium { min-width: 120px; min-height: 120px; }
-.metro-tile-wide { min-width: 248px; min-height: 120px; }
-.metro-tile-large { min-width: 248px; min-height: 248px; }
+/* Canonical sizes are fixed in both dimensions, like Start screen tiles; any
+   content that does not fit (including live content) is clipped. */
+.metro-tile-small { width: 60px; height: 60px; min-width: 60px; min-height: 60px; padding: 6px; justify-content: center; align-items: center; text-align: center; }
+.metro-tile-small .metro-tile-label, .metro-tile-small .metro-tile-sublabel { display: none; }
+.metro-tile-small .metro-tile-icon { margin-bottom: 0; }
+.metro-tile-medium { width: 120px; height: 120px; min-width: 120px; min-height: 120px; }
+.metro-tile-wide { width: 248px; height: 120px; min-width: 248px; min-height: 120px; }
+.metro-tile-large { width: 248px; height: 248px; min-width: 248px; min-height: 248px; }
 
 .metro-tile-icon {
     margin-bottom: 8px;
@@ -61,16 +66,37 @@
     line-height: 1.2;
 }
 
+/* The sublabel never stretches the tile: it clips to two lines with an
+   ellipsis. Use LiveContent to reveal longer text. */
 .metro-tile-sublabel {
+    display: -webkit-box;
     margin-top: 2px;
+    overflow: hidden;
     color: inherit;
     font-size: 12px;
     line-height: 1.2;
     opacity: 0.85;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
+
+/* Live tiles wrap the default face in this container so flipping back to it
+   replays the same entrance animation as the live pages. */
+.metro-tile-front-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 100%;
+    height: 100%;
+    animation: metro-tile-live-in var(--metro-duration-standard) var(--metro-ease-decelerate);
+}
+
+.metro-tile-small .metro-tile-front-content { justify-content: center; align-items: center; }
 
 .metro-tile-live-content {
     display: block;
+    font-size: 13px;
+    line-height: 1.35;
     animation: metro-tile-live-in var(--metro-duration-standard) var(--metro-ease-decelerate);
 }
 

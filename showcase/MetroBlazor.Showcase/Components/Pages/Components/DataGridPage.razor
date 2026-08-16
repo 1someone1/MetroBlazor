@@ -1,0 +1,48 @@
+@page "/components/data-grid"
+
+<PageTitle>Data grid — MetroBlazor</PageTitle>
+
+<DemoSection Title="Rows" Description="A responsive semantic table with row activation and horizontal overflow on narrow screens."
+             Code="@RowsCode">
+    <MetroDataGrid TItem="DemoRow" Items="rows" RowClick="RowClicked">
+        <HeaderTemplate><th>Name</th><th>Status</th><th>Size</th></HeaderTemplate>
+        <RowTemplate Context="row"><td>@row.Name</td><td>@row.Status</td><td>@row.Size</td></RowTemplate>
+    </MetroDataGrid>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@rowStatus</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string RowsCode = @"<MetroDataGrid TItem=""DemoRow"" Items=""rows"" RowClick=""RowClicked"">
+    <HeaderTemplate><th>Name</th><th>Status</th><th>Size</th></HeaderTemplate>
+    <RowTemplate Context=""row""><td>@row.Name</td><td>@row.Status</td><td>@row.Size</td></RowTemplate>
+</MetroDataGrid>";
+
+    private readonly IReadOnlyList<DemoRow> rows =
+    [new("Photos", "Synced", "1.2 GB"), new("Videos", "Uploading", "4.8 GB"), new("Documents", "Ready", "320 MB")];
+    private string rowStatus = "Select a row.";
+
+    private Task RowClicked(DemoRow row)
+    {
+        rowStatus = $"{row.Name} selected.";
+        return Task.CompletedTask;
+    }
+
+    private sealed record DemoRow(string Name, string Status, string Size);
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Items", "IEnumerable<TItem>", "Rows rendered in the table body. (required)"),
+        new("HeaderTemplate", "RenderFragment", "Header cells (<th>) for the table. (required)"),
+        new("RowTemplate", "RenderFragment<TItem>", "Body cells (<td>) for each row. (required)"),
+        new("RowClick", "EventCallback<TItem>", "Raised when a row is activated."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

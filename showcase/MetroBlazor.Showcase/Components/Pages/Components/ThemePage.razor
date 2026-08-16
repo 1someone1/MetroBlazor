@@ -1,0 +1,48 @@
+@page "/components/theme"
+
+<PageTitle>Theme — MetroBlazor</PageTitle>
+
+<DemoSection Title="Setup" Description="Wrap the app in MetroTheme once at the root. It loads metro.css, stamps the Metro design tokens onto a themed root element, and cascades a MetroThemeState to every descendant."
+             Code="@SetupCode">
+    <MetroText TextStyle="MetroTextStyle.Body">
+        This docs site wraps everything in <code>MetroTheme</code> inside <code>MainLayout.razor</code>, so each page inherits the same theme without any extra wiring.
+    </MetroText>
+</DemoSection>
+
+<DemoSection Title="Cascading state" Description="Any descendant can capture the cascaded MetroThemeState and read or change the variant at runtime. The badge below reads the live state of this very page — change the variant with the switcher in the site header and watch it react. The Theming guide walks through all four variants."
+             Code="@CascadeCode">
+    <div class="showcase-inline-controls">
+        <MetroBadge>@CurrentVariant.ToString().ToUpperInvariant()</MetroBadge>
+        <MetroText TextStyle="MetroTextStyle.Link" Href="/theming">Open the Theming guide</MetroText>
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Current variant: @CurrentVariant.</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string SetupCode = @"<MetroTheme Mode=""DesignThemeModes.Dark"" Variant=""MetroThemeVariant.Dark"">
+    <App />
+</MetroTheme>";
+
+    private const string CascadeCode = @"[CascadingParameter] public MetroThemeState? ThemeState { get; set; }
+
+ThemeState!.Variant = MetroThemeVariant.Purple;";
+
+    [CascadingParameter] private MetroThemeState? ThemeState { get; set; }
+
+    private MetroThemeVariant CurrentVariant => ThemeState?.Variant ?? MetroThemeVariant.Dark;
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("ChildContent", "RenderFragment", "App content rendered inside the themed root. (required)"),
+        new("Mode", "DesignThemeModes", "Fluent design theme mode; Dark by default. Light maps to the Light variant."),
+        new("Variant", "MetroThemeVariant?", "Optional initial variant: Dark, Light, Blue, or Purple."),
+    ];
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

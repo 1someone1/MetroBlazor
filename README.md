@@ -92,8 +92,7 @@ ThemeState!.Variant = MetroThemeVariant.Blue;
 ### Surface
 
 - `MetroTile` — live tiles with Small / Medium / Wide / Large sizes
-- `MetroTileGroup` — reorderable, resizable tile groups
-- `MetroAppGrid` — responsive app launcher grid
+- `MetroTileGroup` — reorderable, resizable tile groups; `ReadOnly` turns it into a clickable launcher grid
 - `MetroHub` — spacious grouped content surface
 - `MetroSemanticZoom` — grouped overview / detailed view
 - `MetroSurface` — reusable surface container
@@ -108,11 +107,13 @@ ThemeState!.Variant = MetroThemeVariant.Blue;
 - `MetroRadio` — squared radio
 - `MetroSlider` — thick squared slider
 - `MetroSearchBox` — filled search with icon and clear action
+- `MetroRating` — star rating with pointer and keyboard input
 
 ### Feedback
 
 - `MetroProgress` — segmented determinate and staggered indeterminate progress
 - `MetroBadge` — compact status and count label
+- `MetroTooltip` — hover / focus hint attached to its trigger
 
 ### Collections
 
@@ -131,13 +132,13 @@ ThemeState!.Variant = MetroThemeVariant.Blue;
 ### Layout
 
 - `MetroLayout` — responsive app shell: persistent sidebar rail on desktop, overlay drawer with scrim on mobile
-- `MetroAppFrame` — application frame with header and content regions
-- `MetroSplitView` — pane and content layout
+- `MetroAppFrame` — **deprecated** application frame with header and content regions; use `MetroLayout` with `HeaderTemplate`
 
 ### Commands and overlays
 
 - `MetroCommandBar` — flat command actions
 - `MetroAppBar` — bottom command surface
+- `MetroContextMenu` — right-click command menu that opens at the pointer
 - `MetroFlyout` — contextual surface
 - `MetroContentDialog` — centered modal dialog
 
@@ -156,7 +157,8 @@ IReadOnlyList<string> names = MetroIconCatalog.Search("arrow");
 ```
 
 Use `PathOverride` to supply application-owned SVG paths without adding any runtime
-dependency.
+dependency. `MetroTile.Icon` also resolves catalog names automatically, falling back to
+rendering the value as a text glyph when no catalog icon matches.
 
 ## Live tiles
 
@@ -182,8 +184,11 @@ size cycling.
 
 ## Showcase
 
-Run the interactive showcase to browse every component with live themes, icons, and
-code examples. The showcase itself is built with `MetroLayout`:
+Run the interactive documentation site to browse every component on its own routed page
+(`/components/tile`, `/components/button`, ...) with live demos, code samples, parameter
+tables, themes, and a searchable icon browser. The site itself is built entirely with
+MetroBlazor — the shell is `MetroLayout` + `MetroNavigation`, the header uses
+`MetroBreadcrumb`, and the overview page navigates with `MetroTile`:
 
 ```bash
 dotnet run --project showcase/MetroBlazor.Showcase

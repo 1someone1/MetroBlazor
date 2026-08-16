@@ -1,0 +1,57 @@
+@page "/icons"
+
+<PageTitle>Icons — MetroBlazor</PageTitle>
+
+<DemoSection Title="Icon catalog"
+             Description="Embedded SVG paths rendered with currentColor. Search by name; click a tile to note the API name."
+             Code="@CodeSample">
+    <div class="showcase-control-card">
+        <MetroSearchBox Placeholder="Try home, arrow, folder..." @bind-Value="query" />
+        <div class="showcase-icon-row">
+            @foreach (var name in MetroIconCatalog.Search(query, 96))
+            {
+                <div class="showcase-icon-item">
+                    <MetroIcon Name="@name" Size="MetroIconSize.Large" />
+                    <span>@name</span>
+                </div>
+            }
+        </div>
+        <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+    </div>
+</DemoSection>
+
+<DemoSection Title="Variants and custom icons"
+             Description="Filled is the Windows 8.1 default; Variant=Outline picks the Fluent regular stroke where the catalog ships both (navigation group headers use it). ChildContent projects your own inline SVG when the catalog is not enough."
+             Code="@VariantCode">
+    <div class="showcase-control-card showcase-icon-demo">
+        <MetroIcon Name="settings" Size="MetroIconSize.Large" />
+        <MetroIcon Name="settings" Variant="MetroIconVariant.Outline" Size="MetroIconSize.Large" />
+        <MetroIcon Name="book" Variant="MetroIconVariant.Outline" Size="MetroIconSize.Large" />
+        <MetroIcon Size="MetroIconSize.Large" AriaLabel="Custom circle">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><circle cx="12" cy="12" r="3.5" fill="currentColor" /></svg>
+        </MetroIcon>
+    </div>
+</DemoSection>
+
+@code {
+    private const string CodeSample = @"<MetroIcon Name=""settings"" Size=""MetroIconSize.Large"" />
+
+// Search the catalog programmatically:
+IReadOnlyList<string> names = MetroIconCatalog.Search(""arrow"");
+
+// Or supply your own path without any runtime dependency:
+<MetroIcon Name=""custom"" PathOverride=""M3 3h18v18H3z"" />";
+
+    private const string VariantCode = @"<MetroIcon Name=""settings"" /> @* filled (default) *@
+<MetroIcon Name=""settings"" Variant=""MetroIconVariant.Outline"" />
+
+@* project a custom inline SVG: *@
+<MetroIcon AriaLabel=""Custom"">
+    <svg viewBox=""0 0 24 24""><circle cx=""12"" cy=""12"" r=""9"" fill=""currentColor"" /></svg>
+</MetroIcon>";
+
+    private string? query;
+    private string status = "Type to filter the catalog.";
+
+    protected override void OnInitialized() => status = $"{MetroIconCatalog.Names.Count} icons available.";
+}

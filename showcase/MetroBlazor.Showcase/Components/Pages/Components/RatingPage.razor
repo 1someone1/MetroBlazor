@@ -1,0 +1,52 @@
+@page "/components/rating"
+
+<PageTitle>Rating — MetroBlazor</PageTitle>
+
+<DemoSection Title="Value binding" Description="WinJS-style monochrome outline stars: hovering previews the tentative value, committed stars fill in the theme text color. Click a star to set the value; clicking the current star resets to 0. Arrow keys work when focused."
+             Code="@BindingCode">
+    <div class="showcase-control-card showcase-single-demo">
+        <MetroRating @bind-Value="ratingValue" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Rating: @ratingValue of 5</MetroText>
+</DemoSection>
+
+<DemoSection Title="Max and disabled" Description="Adjust the star count with Max, or render a read-only disabled rating."
+             Code="@MaxCode">
+    <div class="showcase-control-card showcase-single-demo showcase-stack-demo">
+        <MetroRating Max="10" AriaLabel="Score out of 10" @bind-Value="scoreValue" />
+        <MetroRating Value="3" Disabled="true" AriaLabel="Average rating, 3 of 5" />
+    </div>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">Score: @scoreValue of 10</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string BindingCode = @"<MetroRating @bind-Value=""ratingValue"" />
+
+@code {
+    private int ratingValue = 3;
+}";
+
+    private const string MaxCode = @"<MetroRating Max=""10"" AriaLabel=""Score out of 10"" @bind-Value=""scoreValue"" />
+<MetroRating Value=""3"" Disabled=""true"" AriaLabel=""Average rating, 3 of 5"" />";
+
+    private int ratingValue = 3;
+    private int scoreValue = 6;
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("Value", "int", "Number of filled stars; supports @bind-Value."),
+        new("ValueChanged", "EventCallback<int>", "Raised on click or arrow-key input."),
+        new("Max", "int", "Total number of stars. Default 5."),
+        new("Disabled", "bool", "Renders the rating read-only."),
+        new("AriaLabel", "string", "Accessible label for the slider role. Default \"Rating\"."),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}

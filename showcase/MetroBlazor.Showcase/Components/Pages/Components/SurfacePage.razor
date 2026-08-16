@@ -1,0 +1,52 @@
+@page "/components/surface"
+
+<PageTitle>Surface — MetroBlazor</PageTitle>
+
+<DemoSection Title="Themed container" Description="A reusable themed surface container for page regions. It picks up the active MetroTheme tokens, so the same markup reads correctly in every theme."
+             Code="@SurfaceCode">
+    <MetroSurface>
+        <MetroText TextStyle="MetroTextStyle.Subheader">Storage</MetroText>
+        <MetroText TextStyle="MetroTextStyle.Body">A surface groups related content on a themed background. Try switching the theme from the header — the surface follows the active theme tokens.</MetroText>
+        <div class="showcase-inline-controls">
+            <MetroButton OnClick="PrimaryClicked">Open files</MetroButton>
+            <MetroButton OnClick="QuietClicked">Manage storage</MetroButton>
+        </div>
+    </MetroSurface>
+    <MetroText TextStyle="MetroTextStyle.Caption" class="showcase-status" aria-live="polite">@status</MetroText>
+</DemoSection>
+
+<DemoSection Title="Parameters">
+    <MetroDataGrid TItem="ParamRow" Items="parameters">
+        <HeaderTemplate><th>Name</th><th>Type</th><th>Description</th></HeaderTemplate>
+        <RowTemplate Context="p"><td><code>@p.Name</code></td><td>@p.Type</td><td>@p.Description</td></RowTemplate>
+    </MetroDataGrid>
+</DemoSection>
+
+@code {
+    private const string SurfaceCode = @"<MetroSurface>
+    <MetroText TextStyle=""MetroTextStyle.Subheader"">Storage</MetroText>
+    <MetroText TextStyle=""MetroTextStyle.Body"">A surface groups related content on a themed background.</MetroText>
+    <MetroButton>Open files</MetroButton>
+</MetroSurface>";
+
+    private string status = "Use the theme switcher in the header to see the surface restyle.";
+
+    private Task PrimaryClicked()
+    {
+        status = "Open files activated inside the surface.";
+        return Task.CompletedTask;
+    }
+
+    private Task QuietClicked()
+    {
+        status = "Manage storage activated inside the surface.";
+        return Task.CompletedTask;
+    }
+
+    private readonly IReadOnlyList<ParamRow> parameters =
+    [
+        new("ChildContent", "RenderFragment", "Content rendered inside the themed surface region. (required)"),
+    ];
+
+    private sealed record ParamRow(string Name, string Type, string Description);
+}
