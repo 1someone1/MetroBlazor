@@ -48,7 +48,11 @@ jobs:
       with:
         dotnet-version: 10.0.x
     - name: Pack
-      run: dotnet pack src/MetroBlazor/MetroBlazor.csproj -c Release
+      # Razor class libraries: pack alone fails on a fresh checkout ("staticwebassets.build.json
+      # not found") because the static-web-assets manifest only exists after a real build.
+      run: |
+        dotnet build src/MetroBlazor/MetroBlazor.csproj -c Release
+        dotnet pack src/MetroBlazor/MetroBlazor.csproj -c Release --no-build
     - name: Upload release assets
       uses: softprops/action-gh-release@v2
       with:
