@@ -80,13 +80,15 @@
         var entry = DocsCatalog.Entries.FirstOrDefault(candidate => candidate.Key == item.Key);
         if (entry is not null)
         {
-            Navigation.NavigateTo(entry.Route);
+            // Trim the leading slash: "/x" is host-absolute and would drop the base
+            // path (/MetroBlazor/ on GitHub Pages); a relative path stays under base.
+            Navigation.NavigateTo(entry.Route.TrimStart('/'));
         }
     }
 
     private Task HeaderBreadcrumbClicked(MetroBreadcrumbItem item)
     {
-        Navigation.NavigateTo("/");
+        Navigation.NavigateTo(""); // "" resolves to the base URI (respects /MetroBlazor/)
         return Task.CompletedTask;
     }
 

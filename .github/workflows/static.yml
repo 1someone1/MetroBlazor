@@ -45,11 +45,6 @@ jobs:
           html_path: ${{ env.PUBLISH_DIR }}/index.html
           base_href: /MetroBlazor/
 
-      # GitHub Pages serves static files only: a direct GET (or refresh) of a
-      # client-side route 404s without this fallback copy of index.html.
-      - name: Add SPA fallback
-        run: cp ${{ env.PUBLISH_DIR }}/index.html ${{ env.PUBLISH_DIR }}/404.html
-
       - name: Setup Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 

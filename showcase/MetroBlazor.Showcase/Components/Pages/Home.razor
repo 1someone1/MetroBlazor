@@ -22,7 +22,7 @@
                            Live="true"
                            LiveInterval="@(4000 + index * 600)"
                            LiveText="@entry.Description"
-                           OnClick="@(_ => Navigation.NavigateTo(entry.Route))" />
+                           OnClick="@(_ => Navigation.NavigateTo(entry.Route.TrimStart('/')))" />
             }
         </div>
     </DemoSection>
