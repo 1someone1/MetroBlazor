@@ -277,6 +277,10 @@ body::-webkit-scrollbar-thumb:hover,
 .metro-tile-group-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .metro-tile-group-sortable { align-items: flex-start; }
 .metro-tile-group-item { position: relative; overflow: visible; cursor: grab; -webkit-user-drag: element; user-select: none; }
+/* Edit mode on touch devices: pointermove must reach the tile group (touch drag
+   replaces HTML5 drag-and-drop, which is mouse-only), so the browser may not
+   take the gesture over for scrolling. */
+.metro-tile-group-item.editing { touch-action: none; }
 .metro-tile-group-item:active, .metro-tile-group-item.dragging { cursor: grabbing; opacity: 0.55; }
 .metro-tile-edit-control { position: absolute; z-index: 2; display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 3px solid currentColor; border-radius: 50%; color: #fff; background: transparent; font: inherit; cursor: pointer; }
 .metro-tile-group-item:not(.editing) .metro-tile-edit-control { display: none; }
@@ -287,12 +291,14 @@ body::-webkit-scrollbar-thumb:hover,
 /* Multi-row Start-screen layout (Rows parameter): the grid uses a 60px base
    track so Small tiles are true quarter tiles (Win8 style); Medium spans 2x2
    (128px), Wide 4x2, Large 4x4. Tiles fill top-to-bottom and flow into new
-   columns. --metro-tile-group-tracks is Rows * 2, emitted by the component. */
+   columns. --metro-tile-group-tracks is Rows * 2, emitted by the component.
+   Hosts can shrink the base track via --metro-tile-track (e.g. on narrow
+   screens); the component measures the real pitch before each drag. */
 .metro-tile-group-grid.rows {
     display: grid;
     grid-auto-flow: column dense;
-    grid-template-rows: repeat(var(--metro-tile-group-tracks, 4), 60px);
-    grid-auto-columns: 60px;
+    grid-template-rows: repeat(var(--metro-tile-group-tracks, 4), var(--metro-tile-track, 60px));
+    grid-auto-columns: var(--metro-tile-track, 60px);
     justify-content: start;
     align-items: stretch;
     justify-items: stretch;
@@ -309,6 +315,14 @@ body::-webkit-scrollbar-thumb:hover,
 .metro-tile-group-grid.rows > .metro-tile.tile-size-large { grid-column: span 4; grid-row: span 4; }
 .metro-tile-group-grid.rows .metro-tile-group-item .metro-tile,
 .metro-tile-group-grid.rows > .metro-tile { width: 100%; height: 100%; min-width: 0; min-height: 0; }
+
+/* Drop preview for free placement: snapped to the cell under the pointer,
+   tinted with the dragged tile's own accent color. Covered tiles are not
+   rejected — they slide to their first free cell, previewed while dragging. */
+.metro-tile-group-ghost {
+    pointer-events: none;
+    background: color-mix(in srgb, var(--metro-tile-accent, var(--metro-accent)) 45%, transparent);
+}
 .metro-semantic-zoom { display: grid; gap: 16px; position: relative; }
 .metro-semantic-zoom-out, .metro-semantic-zoom-in { animation: metro-page-transition-in var(--metro-duration-standard) var(--metro-ease-decelerate); }
 .metro-semantic-zoom-toggle { justify-self: start; padding: 6px 10px; border: 0; color: var(--metro-accent); background: transparent; font: inherit; cursor: pointer; }

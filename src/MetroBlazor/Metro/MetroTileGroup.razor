@@ -1,5 +1,7 @@
 @namespace MetroBlazor
-@implements IDisposable
+@implements IAsyncDisposable
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
 
 <section class="metro-tile-group @(ReadOnly ? "readonly" : null) @Class" @attributes="AdditionalAttributes">
     @if (!string.IsNullOrWhiteSpace(Title))
@@ -26,15 +28,21 @@
         else
         {
             <div class="metro-tile-group-grid metro-tile-group-sortable @(Columns > 0 ? "columns" : null) @(Rows > 0 ? "rows" : null)" style="@GridStyle"
+                 @ref="gridElement"
+                 @ondragover="OnGridDragOver"
                  @ondragover:preventDefault="true"
-                 @ondrop="@((DragEventArgs e) => DropInGrid(e))">
+                 @ondrop="OnGridDrop"
+                 @onpointermove="OnGridPointerMove"
+                 @onpointerup="OnGridPointerUp"
+                 @onpointercancel="CancelTouchDrag">
                 @for (var index = 0; index < orderedItems.Count; index++)
                 {
                     var tileIndex = index;
                     var item = orderedItems[tileIndex];
                     <div class="metro-tile-group-item @TileSizeClass(item) @(editMode ? "editing" : null) @(draggingIndex == tileIndex ? "dragging" : null)"
+                         style="@ItemGridStyle(item)"
                          draggable="false"
-                         @onpointerdown="@((PointerEventArgs _) => BeginLongPress(tileIndex))"
+                         @onpointerdown="@((PointerEventArgs e) => BeginLongPress(tileIndex, e))"
                          @onpointerup="CancelLongPress"
                          @onpointercancel="CancelLongPress"
                          @onpointerleave="CancelLongPress"
@@ -43,9 +51,10 @@
                          tabindex="-1"
                          @ondragstart="@((DragEventArgs _) => BeginDrag(tileIndex))"
                          @ondragend="EndDrag"
+                         @ondragover="@((DragEventArgs e) => OnTileDragOver(tileIndex, e))"
                          @ondragover:preventDefault="true"
-                         @ondragenter:preventDefault="true"
-                         @ondrop="@((DragEventArgs e) => Drop(tileIndex, e))"
+                         @ondragover:stopPropagation="true"
+                         @ondrop="@((DragEventArgs e) => OnTileDrop(tileIndex, e))"
                          @ondrop:stopPropagation="true">
                         <MetroTile Label="@item.Label"
                                    SubLabel="@item.SubLabel"
@@ -62,6 +71,14 @@
                             <button type="button" class="metro-tile-edit-control metro-tile-size-button" title="Change tile size" aria-label="Change @item.Label tile size" @onclick="@((MouseEventArgs _) => CycleSize(item))" @onfocusout="OnControlFocusOut" @onclick:stopPropagation="true">↗</button>
                         }
                     </div>
+                }
+                @if (Rows > 0 && draggingIndex >= 0 && draggingIndex < orderedItems.Count && ghostX >= 0)
+                {
+                    var ghostItem = orderedItems[draggingIndex];
+                    var (ghostW, ghostH) = SpanOf(ghostItem.Size);
+                    var ghostAccent = string.IsNullOrWhiteSpace(ghostItem.AccentColor) ? null : $"--metro-tile-accent: {ghostItem.AccentColor};";
+                    <div class="metro-tile-group-ghost"
+                         style="grid-column: @(ghostX + 1) / span @ghostW; grid-row: @(ghostY + 1) / span @ghostH; @ghostAccent"></div>
                 }
             </div>
         }
@@ -85,9 +102,22 @@
     /// flexible wrap layout.</summary>
     [Parameter] public int Columns { get; set; }
 
-    /// <summary>Fixed row count for a Start-screen layout: tiles fill top-to-bottom and
-    /// flow into new columns (Win8 style multi-row groups). 0 (default) disables.</summary>
+    /// <summary>Initial row count of a Start-screen layout with free placement: every tile
+    /// carries explicit GridX/GridY coordinates (60px base tracks), holes are allowed, and
+    /// dropping anywhere — on a tile, in a gap, or past the last tile — moves the dragged
+    /// tile to the cell under the pointer, pushing covered tiles aside. The grid grows and
+    /// shrinks with the tiles, so the actual row count follows the layout; Rows only bounds
+    /// the initial auto-placement of tiles without coordinates. 0 (default) disables.</summary>
     [Parameter] public int Rows { get; set; }
+
+    /// <summary>Maximum visual rows the group may grow to; 0 (default) means unlimited.
+    /// Drop targets, resize and push relocations are all clamped to this bound, and a
+    /// drop that cannot fit every pushed tile inside the bound is rejected.</summary>
+    [Parameter] public int MaxRows { get; set; }
+
+    /// <summary>Maximum width in 128px visual columns (a Wide tile takes two);
+    /// 0 (default) means unlimited horizontal growth.</summary>
+    [Parameter] public int MaxColumns { get; set; }
 
     [Parameter] public EventCallback<MetroAppItem> ItemMoved { get; set; }
     [Parameter] public EventCallback<MetroAppItem> ItemSizeChanged { get; set; }
@@ -100,12 +130,53 @@
     [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
+    /// <summary>68px = 60px base track + 8px gap: the default pitch used to snap
+    /// pointer positions to cells. The real pitch is measured from the grid at drag
+    /// start, because hosts can shrink the track via --metro-tile-track.</summary>
+    private const int DefaultCellPitch = 68;
+
     private IList<MetroAppItem>? sourceItems;
     private List<MetroAppItem> orderedItems = new();
     private int draggingIndex = -1;
     private int longPressIndex = -1;
     private bool editMode;
+    private int ghostX = -1;
+    private int ghostY = -1;
+    private Dictionary<MetroAppItem, (int X, int Y)>? previewMoves;
     private CancellationTokenSource? longPressCancellation;
+    private ElementReference gridElement;
+    private IJSObjectReference? jsModule;
+    private double cellPitch = DefaultCellPitch;
+    private double gridLeft;
+    private double gridTop;
+    private bool touchDragging;
+    private bool suppressContextMenu;
+    private DotNetObjectReference<MetroTileGroup>? selfReference;
+    private IJSObjectReference? dismissRegistration;
+
+    private sealed record GridMetrics(double Pitch, double Left, double Top);
+
+    /// <summary>Row tracks the grid currently needs: follows the lowest tile edge,
+    /// so dragging tiles down grows the group and emptying bottom rows shrinks it.</summary>
+    private int EffectiveTracks
+    {
+        get
+        {
+            var tracks = 2; // at least one visual row
+            foreach (var item in orderedItems)
+            {
+                if (item.GridY is int y)
+                {
+                    tracks = Math.Max(tracks, y + SpanOf(item.Size).H);
+                }
+            }
+            return Math.Min(tracks, TrackCap);
+        }
+    }
+
+    /// <summary>Hard bounds in base tracks; int.MaxValue when the cap is disabled.</summary>
+    private int TrackCap => MaxRows > 0 ? MaxRows * 2 : int.MaxValue;
+    private int ColumnCap => MaxColumns > 0 ? MaxColumns * 2 : int.MaxValue;
 
     private string? GridStyle
     {
@@ -119,8 +190,9 @@
             if (Rows > 0)
             {
                 // The CSS grid uses a 60px base track (quarter tile), so each
-                // visual row needs two tracks.
-                style += $"--metro-tile-group-tracks: {Rows * 2};";
+                // visual row needs two tracks. ReadOnly mode never assigns
+                // coordinates, so it sticks to the requested row count.
+                style += $"--metro-tile-group-tracks: {(ReadOnly ? Rows * 2 : EffectiveTracks)};";
             }
             return style.Length > 0 ? style : null;
         }
@@ -128,6 +200,15 @@
 
     private static string TileSizeClass(MetroAppItem item) =>
         $"tile-size-{item.Size.ToString().ToLowerInvariant()}";
+
+    /// <summary>Tile spans in 60px base tracks: Small 1x1, Medium 2x2, Wide 4x2, Large 4x4.</summary>
+    internal static (int W, int H) SpanOf(MetroTileSize size) => size switch
+    {
+        MetroTileSize.Small => (1, 1),
+        MetroTileSize.Medium => (2, 2),
+        MetroTileSize.Wide => (4, 2),
+        _ => (4, 4),
+    };
 
     private Task NotifyLayoutChanged() => LayoutChanged.InvokeAsync(orderedItems.ToList());
 
@@ -137,6 +218,42 @@
         {
             sourceItems = Items;
             orderedItems = Items is null ? new List<MetroAppItem>() : Items.ToList();
+        }
+
+        // Free placement needs every tile to own a cell; tiles arriving without
+        // coordinates (first run, or a legacy saved layout) are auto-placed in
+        // column-major order, matching the old dense column flow.
+        if (Rows > 0 && !ReadOnly)
+        {
+            var limit = Math.Max(2, Rows * 2);
+            foreach (var item in orderedItems)
+            {
+                var (w, h) = SpanOf(item.Size);
+                if (h > TrackCap || w > ColumnCap)
+                {
+                    // A tile bigger than the configured bounds can never fit; shrink it.
+                    item.Size = w > ColumnCap && h <= TrackCap ? MetroTileSize.Medium : MetroTileSize.Wide;
+                    (w, h) = SpanOf(item.Size);
+                }
+
+                if (item.GridX is null || item.GridY is null)
+                {
+                    (item.GridX, item.GridY) = FirstFreeCell(w, h, item, limit) ?? (0, 0);
+                }
+                else
+                {
+                    // Legacy layouts saved before a MaxRows/MaxColumns cap was set can clamp
+                    // two distant tiles onto the same cell; move the loser to a free cell.
+                    var cell = ClampCell((item.GridX.Value, item.GridY.Value), w, h);
+                    if (Collides(cell.X, cell.Y, w, h, item)
+                        && FirstFreeCell(w, h, item, Math.Max(limit, h)) is { } free)
+                    {
+                        cell = free;
+                    }
+
+                    (item.GridX, item.GridY) = cell;
+                }
+            }
         }
     }
 
@@ -159,10 +276,21 @@
         await SelectItem(orderedItems[index]);
     }
 
-    private void BeginLongPress(int index)
+    private void BeginLongPress(int index, PointerEventArgs e)
     {
         CancelLongPress();
         longPressIndex = index;
+
+        if (editMode && e.PointerType == "touch")
+        {
+            // Touch has no HTML5 drag-and-drop; in edit mode a press-and-move
+            // gesture drives the same free-placement logic via pointer events.
+            draggingIndex = index;
+            touchDragging = true;
+            _ = MeasureGrid();
+            return;
+        }
+
         longPressCancellation = new CancellationTokenSource();
         var token = longPressCancellation.Token;
         _ = Task.Run(async () =>
@@ -173,6 +301,9 @@
                 await InvokeAsync(() =>
                 {
                     editMode = true;
+                    // Releasing the long press fires contextmenu; it must not
+                    // toggle edit mode straight back off.
+                    suppressContextMenu = true;
                     StateHasChanged();
                 });
             }
@@ -192,7 +323,20 @@
 
     private void EnterEditMode()
     {
+        if (touchDragging)
+        {
+            return;
+        }
+
         CancelLongPress();
+        if (suppressContextMenu)
+        {
+            // The long-press timer already entered edit mode; this contextmenu is
+            // the touch-release echo, not a fresh right-click toggle.
+            suppressContextMenu = false;
+            return;
+        }
+
         editMode = !editMode;
         draggingIndex = -1;
     }
@@ -204,22 +348,308 @@
         draggingIndex = -1;
     }
 
-    private void BeginDrag(int index)
+    private async Task BeginDrag(int index)
     {
         // Direct drag works without edit mode (Windows 8.1 Update mouse behavior);
         // edit mode only gates the remove/resize controls.
         CancelLongPress();
         draggingIndex = index;
+        await MeasureGrid();
     }
 
-    private Task EndDrag(DragEventArgs _) { draggingIndex = -1; return Task.CompletedTask; }
+    // --- Touch drag (edit mode): pointer events stand in for HTML5 DnD. ---
+    // Touch pointers implicitly capture to the pointerdown element, so OffsetX/Y
+    // are unreliable here; cells come from ClientX/Y minus the measured grid origin.
+
+    private (int X, int Y) CellFromPointer(PointerEventArgs e) =>
+        (Math.Max(0, (int)((e.ClientX - gridLeft) / cellPitch)),
+         Math.Max(0, (int)((e.ClientY - gridTop) / cellPitch)));
+
+    private void OnGridPointerMove(PointerEventArgs e)
+    {
+        if (touchDragging && draggingIndex >= 0 && draggingIndex < orderedItems.Count)
+        {
+            UpdateGhost(CellFromPointer(e));
+        }
+    }
+
+    private Task OnGridPointerUp(PointerEventArgs e)
+    {
+        if (!touchDragging || draggingIndex < 0 || draggingIndex >= orderedItems.Count)
+        {
+            return Task.CompletedTask;
+        }
+
+        touchDragging = false;
+        return DropAt(CellFromPointer(e));
+    }
+
+    private void CancelTouchDrag(PointerEventArgs _)
+    {
+        if (!touchDragging)
+        {
+            return;
+        }
+
+        touchDragging = false;
+        draggingIndex = -1;
+        ClearGhost();
+    }
+
+    /// <summary>Tapping outside any tile exits edit mode (the touch-friendly
+    /// counterpart to right-click toggling). Registered as a document-level listener
+    /// from JS so the whole page counts, not just the grid's own background.</summary>
+    [JSInvokable]
+    public void ExitEditModeFromJs()
+    {
+        if (!editMode)
+        {
+            return;
+        }
+
+        editMode = false;
+        draggingIndex = -1;
+        touchDragging = false;
+        StateHasChanged();
+    }
+
+    /// <summary>Reads the real cell pitch (track + gap) and viewport origin from the
+    /// rendered grid: --metro-tile-track can shrink on narrow screens, and touch drags
+    /// compute cells from ClientX/Y minus the grid origin. Falls back to defaults when
+    /// JS is unavailable (prerendering, unit tests).</summary>
+    private async Task MeasureGrid()
+    {
+        if (Rows <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            jsModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/MetroBlazor/metroTileGroup.js");
+            var metrics = await jsModule.InvokeAsync<GridMetrics>("measureGrid", gridElement);
+            if (metrics.Pitch > 0)
+            {
+                cellPitch = metrics.Pitch;
+                gridLeft = metrics.Left;
+                gridTop = metrics.Top;
+            }
+        }
+        catch (Exception)
+        {
+            // Keep the defaults.
+        }
+    }
+
+    private Task EndDrag(DragEventArgs _)
+    {
+        draggingIndex = -1;
+        ClearGhost();
+        return Task.CompletedTask;
+    }
+
+    // --- Free placement (Rows mode): every drop resolves to a grid cell. ---
+
+    private (int X, int Y) CellFromContainer(DragEventArgs e) =>
+        (Math.Max(0, (int)(e.OffsetX / cellPitch)), Math.Max(0, (int)(e.OffsetY / cellPitch)));
+
+    private (int X, int Y) CellFromTile(int tileIndex, DragEventArgs e)
+    {
+        var item = orderedItems[tileIndex];
+        return (Math.Max(0, (item.GridX ?? 0) + (int)(e.OffsetX / cellPitch)),
+                Math.Max(0, (item.GridY ?? 0) + (int)(e.OffsetY / cellPitch)));
+    }
+
+    internal static bool RectsOverlap(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh) =>
+        ax < bx + bw && bx < ax + aw && ay < by + bh && by < ay + ah;
+
+    private bool Collides(int x, int y, int w, int h, MetroAppItem self) =>
+        orderedItems.Any(o => !ReferenceEquals(o, self)
+            && o.GridX is int ox && o.GridY is int oy
+            && RectsOverlap(x, y, w, h, ox, oy, SpanOf(o.Size).W, SpanOf(o.Size).H));
+
+    /// <summary>Clamps a target cell to the configured bounds for a tile of span w×h.</summary>
+    private (int X, int Y) ClampCell((int X, int Y) cell, int w, int h) =>
+        (Math.Clamp(cell.X, 0, Math.Max(0, ColumnCap - w)),
+         Math.Clamp(cell.Y, 0, Math.Max(0, TrackCap - h)));
+
+    private (int X, int Y)? FirstFreeCell(int w, int h, MetroAppItem self, int trackLimit)
+    {
+        trackLimit = Math.Min(Math.Max(trackLimit, h), TrackCap);
+        for (var x = 0; x + w <= ColumnCap; x++)
+        {
+            for (var y = 0; y + h <= trackLimit; y++)
+            {
+                if (!Collides(x, y, w, h, self))
+                {
+                    return (x, y);
+                }
+            }
+        }
+
+        return null; // bounded and full
+    }
+
+    private void OnGridDragOver(DragEventArgs e) => UpdateGhost(CellFromContainer(e));
+
+    private void OnTileDragOver(int tileIndex, DragEventArgs e) => UpdateGhost(CellFromTile(tileIndex, e));
+
+    private void UpdateGhost((int X, int Y) cell)
+    {
+        if (Rows <= 0 || draggingIndex < 0 || draggingIndex >= orderedItems.Count)
+        {
+            return;
+        }
+
+        var dragged = orderedItems[draggingIndex];
+        var (w, h) = SpanOf(dragged.Size);
+        var clamped = ClampCell(cell, w, h);
+        if (clamped == (ghostX, ghostY))
+        {
+            return;
+        }
+
+        (ghostX, ghostY) = clamped;
+        previewMoves = ComputePushPreview(dragged, clamped.X, clamped.Y);
+    }
+
+    /// <summary>Where covered tiles would move if the moving tile landed at (dragX, dragY)
+    /// with its current size: each colliding tile is relocated to the first free cell in
+    /// column-major order, and a relocated tile can in turn push the next one, like the
+    /// Windows 8 Start screen. Returns null when the configured bounds leave no room for
+    /// every pushed tile.</summary>
+    private Dictionary<MetroAppItem, (int X, int Y)>? ComputePushPreview(MetroAppItem moved, int dragX, int dragY)
+    {
+        var preview = new Dictionary<MetroAppItem, (int X, int Y)>();
+        var (dw, dh) = SpanOf(moved.Size);
+        var limit = Math.Max(EffectiveTracks, dh);
+
+        foreach (var tile in orderedItems)
+        {
+            if (ReferenceEquals(tile, moved) || tile.GridX is not int tx || tile.GridY is not int ty)
+            {
+                continue;
+            }
+
+            var (tw, th) = SpanOf(tile.Size);
+            var hit = RectsOverlap(dragX, dragY, dw, dh, tx, ty, tw, th)
+                || preview.Any(kv => RectsOverlap(kv.Value.X, kv.Value.Y,
+                    SpanOf(kv.Key.Size).W, SpanOf(kv.Key.Size).H, tx, ty, tw, th));
+            if (!hit)
+            {
+                continue;
+            }
+
+            if (FirstFreeDuringDrag(tw, th, tile, moved, (dragX, dragY, dw, dh), preview, limit) is not { } cell)
+            {
+                return null;
+            }
+            else
+            {
+                preview[tile] = cell;
+            }
+        }
+
+        return preview;
+    }
+
+    private (int X, int Y)? FirstFreeDuringDrag(int w, int h, MetroAppItem self, MetroAppItem dragged,
+        (int X, int Y, int W, int H) dragRect, IReadOnlyDictionary<MetroAppItem, (int X, int Y)> preview, int trackLimit)
+    {
+        trackLimit = Math.Min(Math.Max(trackLimit, h), TrackCap);
+        for (var x = 0; x + w <= ColumnCap; x++)
+        {
+            for (var y = 0; y + h <= trackLimit; y++)
+            {
+                if (RectsOverlap(x, y, w, h, dragRect.X, dragRect.Y, dragRect.W, dragRect.H))
+                {
+                    continue;
+                }
+
+                var blocked = false;
+                foreach (var other in orderedItems)
+                {
+                    if (ReferenceEquals(other, self) || ReferenceEquals(other, dragged)
+                        || other.GridX is not int ox || other.GridY is not int oy)
+                    {
+                        continue;
+                    }
+
+                    var (px, py) = preview.TryGetValue(other, out var p) ? p : (ox, oy);
+                    if (RectsOverlap(x, y, w, h, px, py, SpanOf(other.Size).W, SpanOf(other.Size).H))
+                    {
+                        blocked = true;
+                        break;
+                    }
+                }
+
+                if (!blocked)
+                {
+                    return (x, y);
+                }
+            }
+        }
+
+        return null; // bounded and full
+    }
+
+    private void ClearGhost()
+    {
+        ghostX = -1;
+        ghostY = -1;
+        previewMoves = null;
+    }
+
+    private Task OnGridDrop(DragEventArgs e)
+    {
+        // In flexible mode there are no coordinates; estimate a linear slot instead.
+        return Rows > 0 ? DropAt(CellFromContainer(e)) : DropInGrid(e);
+    }
+
+    private Task OnTileDrop(int tileIndex, DragEventArgs e) =>
+        Rows > 0 ? DropAt(CellFromTile(tileIndex, e)) : Drop(tileIndex, e);
+
+    /// <summary>Moves the dragged tile to the given cell; covered tiles are pushed to
+    /// their first free cells (the same positions the drag preview showed). A drop that
+    /// cannot fit every pushed tile inside the configured bounds is rejected.</summary>
+    private async Task DropAt((int X, int Y) cell)
+    {
+        if (draggingIndex < 0 || draggingIndex >= orderedItems.Count)
+        {
+            draggingIndex = -1;
+            ClearGhost();
+            return;
+        }
+
+        var item = orderedItems[draggingIndex];
+        var (w, h) = SpanOf(item.Size);
+        var (x, y) = ClampCell(cell, w, h);
+        var preview = ComputePushPreview(item, x, y);
+        draggingIndex = -1;
+        ClearGhost();
+
+        if (preview is null || (item.GridX == x && item.GridY == y))
+        {
+            return;
+        }
+
+        item.GridX = x;
+        item.GridY = y;
+        foreach (var (pushed, position) in preview)
+        {
+            pushed.GridX = position.X;
+            pushed.GridY = position.Y;
+        }
+
+        await ItemMoved.InvokeAsync(item);
+        await NotifyLayoutChanged();
+    }
+
+    // --- Linear reorder (flexible mode without Rows). ---
 
     /// <summary>
-    /// Drops onto a tile: the pointer half decides insert-before vs insert-after
-    /// (top/bottom halves in Rows mode where tiles flow down columns, left/right
-    /// halves in the default horizontal wrap), so a tile can be moved across both
-    /// rows and columns — e.g. onto the bottom half of the last row-1 tile to
-    /// land after it.
+    /// Drops onto a tile in flexible mode: the pointer half decides insert-before vs
+    /// insert-after (left/right halves in the horizontal wrap).
     /// </summary>
     private Task Drop(int targetIndex, DragEventArgs args)
     {
@@ -229,21 +659,13 @@
             return Task.CompletedTask;
         }
 
-        var insertAfter = args.OffsetY > TileHeight(orderedItems[targetIndex]) / 2;
-        if (Rows <= 0)
-        {
-            insertAfter = args.OffsetX > TileWidth(orderedItems[targetIndex]) / 2;
-        }
-
+        var insertAfter = args.OffsetX > TileWidth(orderedItems[targetIndex]) / 2;
         return MoveDraggedTo(targetIndex + (insertAfter ? 1 : 0));
     }
 
-    /// <summary>
-    /// Drop on the gaps between tiles or the empty area around them (these belong
-    /// to the grid container, not to any tile). Estimates the insertion slot from
-    /// the pointer position in 136px visual cells (128px tile + 8px gap); dropping
-    /// past the last tile appends to the end.
-    /// </summary>
+    /// <summary>Drop on the gaps between tiles or the empty area around them in flexible
+    /// mode. Estimates the insertion slot from the pointer position in 136px visual cells;
+    /// dropping past the last tile appends to the end.</summary>
     private Task DropInGrid(DragEventArgs args)
     {
         if (draggingIndex < 0 || draggingIndex >= orderedItems.Count)
@@ -252,20 +674,7 @@
             return Task.CompletedTask;
         }
 
-        const int cell = 136;
-        int insertIndex;
-        if (Rows > 0)
-        {
-            // Column flow: each column holds Rows visual cells before the next one.
-            var col = Math.Max(0, (int)(args.OffsetX / cell));
-            var row = Math.Clamp((int)(args.OffsetY / cell), 0, Rows - 1);
-            insertIndex = Math.Min(col * Rows + row + 1, orderedItems.Count);
-        }
-        else
-        {
-            insertIndex = Math.Min((int)Math.Round(args.OffsetX / (double)cell), orderedItems.Count);
-        }
-
+        var insertIndex = Math.Min((int)Math.Round(args.OffsetX / 136.0), orderedItems.Count);
         return MoveDraggedTo(insertIndex);
     }
 
@@ -290,7 +699,7 @@
         await NotifyLayoutChanged();
     }
 
-    // Rendered tile dimensions (px) matching metro.css; only the midpoint matters.
+    // Rendered tile widths (px) matching metro.css; only the midpoint matters.
     private static double TileWidth(MetroAppItem item) => item.Size switch
     {
         MetroTileSize.Small => 60,
@@ -298,15 +707,24 @@
         _ => 264,
     };
 
-    private static double TileHeight(MetroAppItem item) => item.Size switch
+    private string? ItemGridStyle(MetroAppItem item)
     {
-        MetroTileSize.Small => 60,
-        MetroTileSize.Large => 264,
-        _ => 128,
-    };
+        if (Rows <= 0 || ReadOnly || item.GridX is null || item.GridY is null)
+        {
+            return null;
+        }
+
+        // While dragging, tiles about to be pushed aside render at their preview cells.
+        var (x, y) = previewMoves is not null && previewMoves.TryGetValue(item, out var preview)
+            ? preview
+            : (item.GridX.Value, item.GridY.Value);
+        var (w, h) = SpanOf(item.Size);
+        return $"grid-column: {x + 1} / span {w}; grid-row: {y + 1} / span {h};";
+    }
 
     private async Task CycleSize(MetroAppItem item)
     {
+        var previousSize = item.Size;
         item.Size = item.Size switch
         {
             MetroTileSize.Small => MetroTileSize.Medium,
@@ -314,6 +732,40 @@
             MetroTileSize.Wide => MetroTileSize.Large,
             _ => MetroTileSize.Small
         };
+
+        if (Rows > 0 && !ReadOnly)
+        {
+            var (w, h) = SpanOf(item.Size);
+            if (h > TrackCap || w > ColumnCap)
+            {
+                // The new size exceeds the configured bounds; wrap back to Small.
+                item.Size = MetroTileSize.Small;
+                (w, h) = SpanOf(item.Size);
+            }
+
+            var (x, y) = ClampCell((item.GridX ?? 0, item.GridY ?? 0), w, h);
+            if (Collides(x, y, w, h, item))
+            {
+                // Push covered tiles aside, like a drop. When the bounds leave no room
+                // for everyone, keep the old size instead of overlapping a neighbor.
+                var preview = ComputePushPreview(item, x, y);
+                if (preview is null)
+                {
+                    item.Size = previousSize;
+                    return;
+                }
+
+                foreach (var (pushed, position) in preview)
+                {
+                    pushed.GridX = position.X;
+                    pushed.GridY = position.Y;
+                }
+            }
+
+            item.GridX = x;
+            item.GridY = y;
+        }
+
         await ItemSizeChanged.InvokeAsync(item);
         await NotifyLayoutChanged();
     }
@@ -325,9 +777,48 @@
         await NotifyLayoutChanged();
     }
 
-    public void Dispose()
+    /// <summary>Registers the page-wide edit-mode dismiss listener. Touch drags and
+    /// mouse drags share the same JS module; it is imported once and reused.</summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || ReadOnly)
+        {
+            return;
+        }
+
+        try
+        {
+            jsModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/MetroBlazor/metroTileGroup.js");
+            selfReference = DotNetObjectReference.Create(this);
+            dismissRegistration = await jsModule.InvokeAsync<IJSObjectReference>("registerDismiss", gridElement, selfReference);
+        }
+        catch (Exception)
+        {
+            // JS unavailable (prerendering, tests): page-wide dismiss stays off.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
     {
         longPressCancellation?.Cancel();
         longPressCancellation?.Dispose();
+        try
+        {
+            if (dismissRegistration is not null)
+            {
+                await dismissRegistration.InvokeVoidAsync("dispose");
+                await dismissRegistration.DisposeAsync();
+            }
+
+            if (jsModule is not null)
+            {
+                await jsModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        selfReference?.Dispose();
     }
 }
