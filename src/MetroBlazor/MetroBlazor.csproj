@@ -11,6 +11,9 @@
     <Description>Win8 Metro UI style Blazor component library. Fluent UI Blazor based, with hand-written Metro controls and animations.</Description>
     <PackageTags>blazor;metro;win8;modern-ui;fluent-ui</PackageTags>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/1someone1/MetroBlazor</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/1someone1/MetroBlazor</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\..\artifacts\packages</PackageOutputPath>

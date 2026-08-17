@@ -8,6 +8,8 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  release:
+    types: [ published ]
 
 jobs:
   build:
@@ -26,3 +28,36 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+
+  # Attach the NuGet package (and symbols) to GitHub Releases, and push to
+  # nuget.org via trusted publishing (OIDC → short-lived API key, no stored
+  # secret). Requires a trusted publishing policy on nuget.org for this repo
+  # and workflow file; the nuget.org username comes from the NUGET_USER secret.
+  publish:
+
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+    - name: Pack
+      run: dotnet pack src/MetroBlazor/MetroBlazor.csproj -c Release
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts/packages/*.nupkg
+    - name: NuGet login (OIDC → temp API key)
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+    - name: Push to nuget.org
+      run: dotnet nuget push artifacts/packages/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
